@@ -66,7 +66,7 @@ const getBrixHeaders = () => {
   return {
     'X-API-Key': BRIX_API_KEY,
     'Content-Type': 'application/json',
-    'User-Agent': 'MB15/1.0'
+    'User-Agent': 'MonApp/1.0'
   };
 };
 
