@@ -16,9 +16,19 @@ const BRIX_API_KEY = process.env.BRIX_API_KEY;
 const BRIX_BASE_URL = 'https://brixhub.net/api/v1';
 
 if (!BRIX_API_KEY) {
-  console.error('ERROR: BRIX_API_KEY is not defined in the environment variables.');
-  process.exit(1);
+  console.warn('WARNING: BRIX_API_KEY is not defined in the environment variables. Please add it to your environment.');
 }
+
+// Middleware to check if BRIX_API_KEY is configured
+const checkBrixApiKey = (req, res, next) => {
+  if (!process.env.BRIX_API_KEY) {
+    return res.status(500).json({
+      status: 500,
+      message: "Clé API manquante. Veuillez définir BRIX_API_KEY dans les variables d'environnement sur le tableau de bord Vercel (Project Settings > Environment Variables)."
+    });
+  }
+  next();
+};
 
 // Helper to filter out blocked names (Bouzoumita, Marzoug)
 const filterBlockedNames = (results) => {
@@ -93,7 +103,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Route: Get Key Details & Consumption Stats (me)
-app.get('/api/me', async (req, res) => {
+app.get('/api/me', checkBrixApiKey, async (req, res) => {
   try {
     const response = await fetch(`${BRIX_BASE_URL}/me`, {
       method: 'GET',
@@ -114,7 +124,7 @@ app.get('/api/me', async (req, res) => {
 });
 
 // Route: Search Profiles
-app.post('/api/search', async (req, res) => {
+app.post('/api/search', checkBrixApiKey, async (req, res) => {
   console.log('--- SEARCH REQUEST RECEIVED ---');
   console.log('Payload:', JSON.stringify(req.body, null, 2));
   try {
@@ -155,7 +165,7 @@ app.post('/api/search', async (req, res) => {
 });
 
 // Route: Reverse Lookups (email, phone, iban)
-app.get('/api/lookup/:type/:value', async (req, res) => {
+app.get('/api/lookup/:type/:value', checkBrixApiKey, async (req, res) => {
   const { type, value } = req.params;
   
   if (!['email', 'phone', 'iban'].includes(type)) {
@@ -213,7 +223,7 @@ app.get('/api/lookup/:type/:value', async (req, res) => {
 });
 
 // Route: Usage Logs (Pro+ Feature)
-app.get('/api/usage', async (req, res) => {
+app.get('/api/usage', checkBrixApiKey, async (req, res) => {
   try {
     const limit = req.query.limit || 50;
     const offset = req.query.offset || 0;
