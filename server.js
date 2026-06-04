@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BRIX_API_KEY = process.env.BRIX_API_KEY;
+const BRIX_API_KEY = process.env.BRIX_API_KEY || 'brix_fB03a4Lt76Z9yEpvbWVnbyUwGmjXqad2FrWztKg7vg4VlhzK';
 const BRIX_BASE_URL = 'https://brixhub.net/api/v1';
 
 if (!BRIX_API_KEY) {
@@ -21,10 +21,10 @@ if (!BRIX_API_KEY) {
 
 // Middleware to check if BRIX_API_KEY is configured
 const checkBrixApiKey = (req, res, next) => {
-  if (!process.env.BRIX_API_KEY) {
+  if (!BRIX_API_KEY) {
     return res.status(500).json({
       status: 500,
-      message: "Clé API manquante. Veuillez définir BRIX_API_KEY dans les variables d'environnement sur le tableau de bord Vercel (Project Settings > Environment Variables)."
+      message: "Clé API manquante. Veuillez définir BRIX_API_KEY dans le code ou dans les variables d'environnement."
     });
   }
   next();
