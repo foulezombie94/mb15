@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 
 // Load environment variables
 dotenv.config();
@@ -18,6 +19,87 @@ const BRIX_BASE_URL = 'https://brixhub.net/api/v1';
 if (!BRIX_API_KEY) {
   console.warn('WARNING: BRIX_API_KEY is not defined in the environment variables. Please add it to your environment.');
 }
+
+// Native cURL fetch helper to bypass Cloudflare bot/TLS fingerprinting rules
+const fetchViaCurl = (url, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const method = options.method || 'GET';
+    const headers = options.headers || {};
+    const body = options.body || '';
+
+    // Determine curl binary (curl.exe on Windows local, curl on Linux prod)
+    const curlBin = process.platform === 'win32' ? 'curl.exe' : 'curl';
+    let cmd = `"${curlBin}" -s -i -X ${method}`;
+    
+    // Append headers
+    for (const [key, value] of Object.entries(headers)) {
+      cmd += ` -H "${key}: ${value.replace(/"/g, '\\"')}"`;
+    }
+    
+    // Append body for POST/PUT requests
+    if (body && (method === 'POST' || method === 'PUT')) {
+      if (process.platform === 'win32') {
+        const escapedBody = body.replace(/"/g, '\\"');
+        cmd += ` -d "${escapedBody}"`;
+      } else {
+        const escapedBody = body.replace(/'/g, "'\\''");
+        cmd += ` -d '${escapedBody}'`;
+      }
+    }
+    
+    // Append URL
+    cmd += ` "${url}"`;
+
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        return reject(error);
+      }
+      
+      // Parse output headers and body
+      const doubleNewLineIndex = stdout.indexOf('\r\n\r\n');
+      let headerText = '';
+      let responseBody = '';
+      
+      if (doubleNewLineIndex !== -1) {
+        headerText = stdout.substring(0, doubleNewLineIndex);
+        responseBody = stdout.substring(doubleNewLineIndex + 4);
+      } else {
+        const doubleLFIndex = stdout.indexOf('\n\n');
+        if (doubleLFIndex !== -1) {
+          headerText = stdout.substring(0, doubleLFIndex);
+          responseBody = stdout.substring(doubleLFIndex + 2);
+        } else {
+          responseBody = stdout;
+        }
+      }
+      
+      // Parse headers map
+      const responseHeaders = new Map();
+      const headerLines = headerText.split(/\r?\n/);
+      const statusLine = headerLines.shift();
+      const statusMatch = statusLine ? statusLine.match(/HTTP\/\d\.\d\s+(\d+)/) : null;
+      const statusCode = statusMatch ? parseInt(statusMatch[1], 10) : 200;
+      
+      for (const line of headerLines) {
+        const parts = line.split(':');
+        if (parts.length >= 2) {
+          const name = parts[0].trim().toLowerCase();
+          const val = parts.slice(1).join(':').trim();
+          responseHeaders.set(name, val);
+        }
+      }
+
+      resolve({
+        status: statusCode,
+        headers: {
+          get: (name) => responseHeaders.get(name.toLowerCase()) || null
+        },
+        text: async () => responseBody,
+        json: async () => JSON.parse(responseBody)
+      });
+    });
+  });
+};
 
 // Middleware to check if BRIX_API_KEY is configured
 const checkBrixApiKey = (req, res, next) => {
@@ -89,7 +171,7 @@ const forwardRateLimitHeaders = (brixRes, expressRes) => {
 // Route: API Health
 app.get('/api/health', async (req, res) => {
   try {
-    const response = await fetch(`${BRIX_BASE_URL}/health`, {
+    const response = await fetchViaCurl(`${BRIX_BASE_URL}/health`, {
       method: 'GET',
       headers: getBrixHeaders() // Now using headers here too
     });
@@ -120,7 +202,7 @@ app.get('/api/health', async (req, res) => {
 // Route: Get Key Details & Consumption Stats (me)
 app.get('/api/me', checkBrixApiKey, async (req, res) => {
   try {
-    const response = await fetch(`${BRIX_BASE_URL}/me`, {
+    const response = await fetchViaCurl(`${BRIX_BASE_URL}/me`, {
       method: 'GET',
       headers: getBrixHeaders()
     });
@@ -155,7 +237,7 @@ app.post('/api/search', checkBrixApiKey, async (req, res) => {
   console.log('--- SEARCH REQUEST RECEIVED ---');
   console.log('Payload:', JSON.stringify(req.body, null, 2));
   try {
-    const response = await fetch(`${BRIX_BASE_URL}/search`, {
+    const response = await fetchViaCurl(`${BRIX_BASE_URL}/search`, {
       method: 'POST',
       headers: getBrixHeaders(),
       body: JSON.stringify(req.body)
@@ -217,7 +299,7 @@ app.get('/api/lookup/:type/:value', checkBrixApiKey, async (req, res) => {
   try {
     // URL encode the value to handle emails and complex IBANs properly
     const encodedValue = encodeURIComponent(value);
-    const response = await fetch(`${BRIX_BASE_URL}/lookup/${type}/${encodedValue}`, {
+    const response = await fetchViaCurl(`${BRIX_BASE_URL}/lookup/${type}/${encodedValue}`, {
       method: 'GET',
       headers: getBrixHeaders()
     });
@@ -279,7 +361,7 @@ app.get('/api/usage', checkBrixApiKey, async (req, res) => {
     const limit = req.query.limit || 50;
     const offset = req.query.offset || 0;
 
-    const response = await fetch(`${BRIX_BASE_URL}/usage?limit=${limit}&offset=${offset}`, {
+    const response = await fetchViaCurl(`${BRIX_BASE_URL}/usage?limit=${limit}&offset=${offset}`, {
       method: 'GET',
       headers: getBrixHeaders()
     });
