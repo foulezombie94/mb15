@@ -251,10 +251,15 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start listening
-app.listen(PORT, () => {
-  console.log(`==================================================`);
-  console.log(`  MB15 Dashboard backend running locally!`);
-  console.log(`  Access the app at: http://localhost:${PORT}`);
-  console.log(`==================================================`);
-});
+// Start listening only when not on Vercel serverless environment
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`==================================================`);
+    console.log(`  MB15 Dashboard backend running locally!`);
+    console.log(`  Access the app at: http://localhost:${PORT}`);
+    console.log(`==================================================`);
+  });
+}
+
+// Export the app instance for Vercel
+export default app;
