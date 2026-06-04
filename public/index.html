@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>MB15 — Console d'Intelligence API</title>
+  <!-- Tailwind CSS via CDN with form plugin -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+  
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#002022",
+            "tertiary": "#f4f6ff",
+            "inverse-primary": "#006970",
+            "primary-fixed-dim": "#00dbe9",
+            "on-background": "#dfe2f1",
+            "inverse-surface": "#dfe2f1",
+            "surface": "#0f131d",
+            "outline": "#849495",
+            "primary-container": "#00f0ff",
+            "secondary": "#adc6ff",
+            "on-surface": "#dfe2f1",
+            "inverse-on-surface": "#2c303b",
+            "surface-bright": "#353944",
+            "on-primary-fixed-variant": "#004f54",
+            "error": "#ffb4ab",
+            "on-primary-container": "#006970",
+            "background": "#0f131d",
+            "on-tertiary": "#263143",
+            "surface-container-lowest": "#0a0e18",
+            "tertiary-fixed": "#d8e3fb",
+            "secondary-fixed-dim": "#adc6ff",
+            "tertiary-container": "#cfdaf2",
+            "on-secondary": "#002e6a",
+            "surface-dim": "#0f131d",
+            "on-surface-variant": "#b9cacb",
+            "surface-variant": "#313540",
+            "on-error": "#690005",
+            "surface-container-highest": "#313540",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#3c475a",
+            "on-tertiary-container": "#545f73",
+            "outline-variant": "#3b494b",
+            "secondary-fixed": "#d8e2ff",
+            "on-secondary-fixed": "#001a42",
+            "error-container": "#93000a",
+            "surface-container-low": "#171b26",
+            "on-secondary-container": "#e6ecff",
+            "primary-fixed": "#7df4ff",
+            "secondary-container": "#0566d9",
+            "tertiary-fixed-dim": "#bcc7de",
+            "surface-container": "#1c1f2a",
+            "on-secondary-fixed-variant": "#004395",
+            "primary": "#dbfcff",
+            "surface-tint": "#00dbe9",
+            "surface-container-high": "#262a35",
+            "on-tertiary-fixed": "#111c2d",
+            "on-primary": "#00363a"
+          },
+          "spacing": {
+            "sm": "8px",
+            "xl": "32px",
+            "base": "4px",
+            "md": "16px",
+            "lg": "24px",
+            "margin": "24px",
+            "gutter": "20px",
+            "xs": "4px"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Inter"],
+            "label-mono": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+            "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(132, 148, 149, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: all 0.3s ease;
+    }
+    
+    .glass-panel:hover {
+      border-color: rgba(0, 240, 255, 0.15);
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 240, 255, 0.03);
+    }
+    
+    /* Premium Input Styling */
+    input[type="text"], input[type="number"], select {
+      background-color: rgba(15, 19, 29, 0.6) !important;
+      border: 1px solid rgba(132, 148, 149, 0.3) !important;
+      border-radius: 12px !important;
+      color: #dfe2f1 !important;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    input[type="text"]:hover, input[type="number"]:hover, select:hover {
+      background-color: rgba(23, 27, 38, 0.8) !important;
+      border-color: rgba(0, 240, 255, 0.3) !important;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      background-color: rgba(10, 14, 24, 0.9) !important;
+      border-color: #00f0ff !important;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25) !important;
+      ring: none !important;
+    }
+    
+    /* Premium Accordions */
+    .accordion-item {
+      border: 1px solid rgba(132, 148, 149, 0.18) !important;
+      border-radius: 14px !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+    }
+    .accordion-item:hover {
+      border-color: rgba(0, 240, 255, 0.25) !important;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
+    }
+    
+    .accordion-item.active {
+      border-color: rgba(0, 240, 255, 0.4) !important;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.08);
+      background-color: rgba(23, 27, 38, 0.4) !important;
+    }
+
+    /* Premium Results Row hover highlight */
+    tbody tr {
+      transition: all 0.2s ease-in-out !important;
+    }
+    tbody tr:hover {
+      background-color: rgba(0, 240, 255, 0.03) !important;
+      box-shadow: inset 3px 0 0 #00f0ff;
+    }
+    
+    /* Neon badges and buttons */
+    #results-count-badge {
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+    }
+    #btn-search-submit, #btn-lookup-submit {
+      box-shadow: 0 4px 14px rgba(0, 240, 255, 0.25);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    #btn-search-submit:hover, #btn-lookup-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 240, 255, 0.45);
+    }
+    #btn-search-submit:active, #btn-lookup-submit:active {
+      transform: translateY(1px);
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: theme('colors.surface-variant');
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: theme('colors.outline-variant');
+    }
+    
+    @media (max-width: 767px) {
+      .mobile-nav-hidden {
+        transform: translateY(120%) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      nav.fixed {
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+
+  <!-- App Shell Container -->
+  <div class="flex h-[100dvh] w-full">
+    
+    <!-- SideNavBar -->
+    <nav class="fixed bottom-3 left-3 right-3 h-16 bg-surface-container-lowest/95 backdrop-blur-md border border-outline-variant/30 flex flex-row px-sm py-1 z-50 rounded-2xl shadow-2xl md:fixed md:left-0 md:top-0 md:bottom-0 md:h-screen md:w-[260px] md:border-r md:border-t-0 md:border-l-0 md:border-b-0 md:flex-col md:py-lg md:rounded-none md:px-0 md:bg-surface-container-lowest md:shadow-none">
+      
+      <!-- Brand Header -->
+      <div class="px-lg mb-xl hidden md:flex items-center gap-md">
+        <div class="w-10 h-10 bg-primary-container/10 rounded-xl flex items-center justify-center border border-primary-container/30">
+          <span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">hexagon</span>
+        </div>
+        <div>
+          <h1 class="text-headline-md font-headline-md font-black text-on-surface tracking-tighter">MB15</h1>
+          <p class="font-label-mono text-label-mono text-primary-container uppercase">V1 API CONSOLE</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <div class="flex-grow md:flex-1 overflow-x-auto md:overflow-y-auto w-full h-full md:h-auto">
+        <ul class="flex flex-row justify-around items-center h-full w-full space-y-0 md:flex-col md:space-y-sm md:h-auto md:items-stretch" id="sidebar-menu">
+          <li class="flex-grow flex justify-center h-full md:block md:w-full md:h-auto px-xs md:px-0">
+            <a id="nav-search" class="flex flex-col md:flex-row items-center gap-1 md:gap-md px-3 py-1.5 md:px-md md:py-sm bg-primary-container/10 md:bg-surface-variant/30 text-primary-container border-b-2 md:border-b-0 md:border-l-2 border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.12)] border border-primary-container/20 w-full rounded-xl md:rounded-none text-center md:text-left" href="#" data-tab="search">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+              <span class="font-label-mono text-[10px] md:text-label-mono leading-none md:leading-normal"><span class="hidden md:inline">Recherche Multi-Critères</span><span class="md:hidden">Recherche</span></span>
+            </a>
+          </li>
+          <li class="flex-grow flex justify-center h-full md:block md:w-full md:h-auto px-xs md:px-0">
+            <a id="nav-lookup" class="flex flex-col md:flex-row items-center gap-1 md:gap-md px-3 py-1.5 md:px-md md:py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/20 transition-colors duration-200 w-full rounded-xl md:rounded-none text-center md:text-left" href="#" data-tab="lookup">
+              <span class="material-symbols-outlined">visibility</span>
+              <span class="font-label-mono text-[10px] md:text-label-mono leading-none md:leading-normal"><span class="hidden md:inline">Reverse Lookup</span><span class="md:hidden">Lookup</span></span>
+            </a>
+          </li>
+          <li class="flex-grow flex justify-center h-full md:block md:w-full md:h-auto px-xs md:px-0">
+            <a id="nav-stats" class="flex flex-col md:flex-row items-center gap-1 md:gap-md px-3 py-1.5 md:px-md md:py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/20 transition-colors duration-200 w-full rounded-xl md:rounded-none text-center md:text-left" href="#" data-tab="stats">
+              <span class="material-symbols-outlined">bar_chart</span>
+              <span class="font-label-mono text-[10px] md:text-label-mono leading-none md:leading-normal"><span class="hidden md:inline">Statistiques &amp; Clé</span><span class="md:hidden">Stats</span></span>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- Footer Section -->
+      <div class="px-md mt-auto space-y-md hidden md:block w-full">
+        <!-- Service Status / Quota Box -->
+        <div class="bg-surface-container rounded-lg p-md border border-outline-variant/50">
+          <div class="flex items-center justify-between mb-sm">
+            <div class="flex items-center gap-xs">
+              <div class="w-2 h-2 rounded-full bg-success" id="health-dot"></div>
+              <span class="font-label-mono text-label-mono text-on-surface" id="health-text">Service Opérationnel</span>
+            </div>
+          </div>
+          <div class="space-y-xs">
+            <div class="flex justify-between text-xs text-on-surface-variant">
+              <span>Quota Restant</span>
+              <span id="quota-percent">--%</span>
+            </div>
+            <div class="w-full h-1 bg-surface-variant rounded-full overflow-hidden">
+              <div class="h-full bg-primary-container w-0 transition-all duration-500" id="quota-fill-bar"></div>
+            </div>
+            <div class="text-xs text-on-surface-variant text-right font-label-mono" id="quota-numerical">
+              -- / -- reqs
+            </div>
+          </div>
+        </div>
+        <!-- Theme Toggle -->
+        <button id="theme-toggle-btn" class="w-full flex items-center justify-center gap-sm px-md py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/20 rounded-md border border-outline-variant/50 transition-colors duration-200">
+          <span class="material-symbols-outlined" id="theme-toggle-icon">light_mode</span>
+          <span class="font-label-mono text-label-mono">Thème Visuel</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-0 md:ml-[260px] pb-24 md:pb-0 flex flex-col h-[100dvh] bg-background">
+      
+      <!-- TopNavBar -->
+      <header class="mx-md mt-md mb-xs rounded-2xl glass-panel h-16 md:h-20 flex justify-between items-center px-4 md:px-xl shrink-0 z-40 border border-outline-variant/30">
+        <div>
+          <h2 class="text-base md:text-headline-sm font-bold text-primary" id="current-page-title">Recherche Multi-Critères</h2>
+          <p class="hidden md:block text-on-surface-variant text-sm mt-1" id="current-page-subtitle">Recherchez à travers toutes nos sources de données à l'aide de filtres combinés.</p>
+        </div>
+        <div class="flex items-center gap-xs md:gap-md">
+          <!-- Plan Badge -->
+          <div class="flex items-center gap-1 md:gap-sm bg-surface-container-high border border-outline-variant rounded-full px-2 py-1 md:px-4 md:py-2">
+            <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-secondary-container flex items-center justify-center">
+              <span class="material-symbols-outlined text-[10px] md:text-[14px] text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="hidden sm:block text-[8px] md:text-[10px] text-on-surface-variant uppercase tracking-wider leading-none">PLAN ACTIF</span>
+              <span class="text-xs md:text-sm font-bold text-secondary leading-tight" id="header-plan-name">CHARGEMENT...</span>
+            </div>
+          </div>
+          <!-- Quota Badge -->
+          <div class="flex items-center gap-1 md:gap-sm bg-surface-container-high border border-outline-variant rounded-full px-2 py-1 md:px-4 md:py-2">
+            <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-primary-container/20 flex items-center justify-center">
+              <span class="material-symbols-outlined text-[10px] md:text-[14px] text-primary-container" style="font-variation-settings: 'FILL' 1;">bolt</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="hidden sm:block text-[8px] md:text-[10px] text-on-surface-variant uppercase tracking-wider leading-none">REQUÊTES RESTANTES</span>
+              <span class="text-xs md:text-sm font-bold text-primary-container leading-tight" id="header-quota-remaining">--</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Page Panels Container -->
+      <div class="flex-1 overflow-hidden relative">
+        
+        <!-- ================= TAB 1: MULTI-CRITERIA SEARCH ================= -->
+        <div id="tab-content-search" class="tab-panel flex flex-col md:flex-row h-full p-md md:p-lg gap-md md:gap-lg overflow-y-auto md:overflow-hidden">
+          
+          <!-- Left Column: Search Filters -->
+          <aside class="w-full md:w-[400px] glass-panel rounded-2xl flex flex-col shrink-0 overflow-visible md:overflow-hidden relative">
+            <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+            
+            <div class="p-md border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-lowest/50">
+              <h3 class="font-bold text-on-surface text-sm tracking-tight flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px] text-primary-container">tune</span>Filtres de recherche
+              </h3>
+              <button id="btn-reset-form" class="text-xs text-on-surface-variant hover:text-primary-container flex items-center gap-xs bg-surface-variant/30 hover:bg-surface-variant/50 px-2.5 py-1 rounded-xl transition-all">
+                <span class="material-symbols-outlined text-[16px]">refresh</span>Réinitialiser
+              </button>
+            </div>
+
+            <!-- Scrollable Filter Fields -->
+            <form id="search-form" class="flex-1 overflow-y-visible md:overflow-y-auto p-md space-y-sm">
+              
+              <!-- Identité Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-primary-container">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="font-bold">Identité</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_less</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content">
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="nom_famille" class="text-xs text-on-surface-variant">Nom de famille</label>
+                      <input id="nom_famille" name="nom_famille" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0 transition-all" placeholder="Ex: Dupont" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="prenom" class="text-xs text-on-surface-variant">Prénom</label>
+                      <input id="prenom" name="prenom" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0 transition-all" placeholder="Ex: Jean" type="text"/>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="nom_naissance" class="text-xs text-on-surface-variant">Nom de naissance</label>
+                      <input id="nom_naissance" name="nom_naissance" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0 transition-all" placeholder="Nom de jeune fille" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="nom_affichage" class="text-xs text-on-surface-variant">Pseudo / Nom affichage</label>
+                      <input id="nom_affichage" name="nom_affichage" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0 transition-all" placeholder="Pseudo" type="text"/>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="nom_utilisateur" class="text-xs text-on-surface-variant">Nom d'utilisateur (Login)</label>
+                      <input id="nom_utilisateur" name="nom_utilisateur" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0 transition-all" placeholder="Recherche exacte" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="date_naissance" class="text-xs text-on-surface-variant">Date de naissance</label>
+                      <input id="date_naissance" name="date_naissance" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0 transition-all" placeholder="YYYY-MM-DD" type="text"/>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-3 gap-sm">
+                    <div class="space-y-xs">
+                      <label for="annee_naissance" class="text-xs text-on-surface-variant">Année</label>
+                      <input id="annee_naissance" name="annee_naissance" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-2 py-2 text-sm text-on-surface focus:outline-none focus:ring-0" placeholder="1985" type="text"/>
+                    </div>
+                    <div class="space-y-xs">
+                      <label for="mois_naissance" class="text-xs text-on-surface-variant">Mois</label>
+                      <input id="mois_naissance" name="mois_naissance" min="1" max="12" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-2 py-2 text-sm text-on-surface focus:outline-none focus:ring-0" placeholder="12" type="number"/>
+                    </div>
+                    <div class="space-y-xs">
+                      <label for="jour_naissance" class="text-xs text-on-surface-variant">Jour</label>
+                      <input id="jour_naissance" name="jour_naissance" min="1" max="31" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-2 py-2 text-sm text-on-surface focus:outline-none focus:ring-0" placeholder="25" type="number"/>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs">
+                      <label for="genre" class="text-xs text-on-surface-variant">Genre</label>
+                      <select id="genre" name="genre" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-0">
+                        <option value="">Tous</option>
+                        <option value="M">M (Homme)</option>
+                        <option value="F">F (Femme)</option>
+                      </select>
+                    </div>
+                    <div class="space-y-xs">
+                      <label for="civilite" class="text-xs text-on-surface-variant">Civilité</label>
+                      <select id="civilite" name="civilite" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-0">
+                        <option value="">Toutes</option>
+                        <option value="M.">M.</option>
+                        <option value="Mme">Mme</option>
+                        <option value="Mlle">Mlle</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact & Réseaux Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-on-surface">
+                    <span class="material-symbols-outlined text-on-surface-variant">call</span>
+                    <span class="font-semibold">Contact &amp; Réseaux</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_more</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content hidden">
+                  <div class="space-y-xs glow-focus">
+                    <label for="email" class="text-xs text-on-surface-variant">Adresse email</label>
+                    <input id="email" name="email" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Ex: jean.dupont@gmail.com" type="text"/>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="telephone" class="text-xs text-on-surface-variant">Téléphone fixe/mobile</label>
+                      <input id="telephone" name="telephone" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="0612345678" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="mobile" class="text-xs text-on-surface-variant">Mobile</label>
+                      <input id="mobile" name="mobile" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="06..." type="text"/>
+                    </div>
+                  </div>
+                  <div class="space-y-xs glow-focus">
+                    <label for="adresse_ip" class="text-xs text-on-surface-variant">Adresse IP</label>
+                    <input id="adresse_ip" name="adresse_ip" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Ex: 82.20..." type="text"/>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Adresse Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-on-surface">
+                    <span class="material-symbols-outlined text-on-surface-variant">location_on</span>
+                    <span class="font-semibold">Adresse Géographique</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_more</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content hidden">
+                  <div class="space-y-xs glow-focus">
+                    <label for="adresse" class="text-xs text-on-surface-variant">Rue et numéro</label>
+                    <input id="adresse" name="adresse" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="12 rue de Paris" type="text"/>
+                  </div>
+                  <div class="space-y-xs glow-focus">
+                    <label for="complement_adresse" class="text-xs text-on-surface-variant">Complément d'adresse</label>
+                    <input id="complement_adresse" name="complement_adresse" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Bâtiment C, esc B" type="text"/>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="code_postal" class="text-xs text-on-surface-variant">Code postal</label>
+                      <input id="code_postal" name="code_postal" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="75001" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="ville" class="text-xs text-on-surface-variant">Ville</label>
+                      <input id="ville" name="ville" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Paris" type="text"/>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="ville_naissance" class="text-xs text-on-surface-variant">Ville de naissance</label>
+                      <input id="ville_naissance" name="ville_naissance" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Lyon" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="pays" class="text-xs text-on-surface-variant">Pays</label>
+                      <input id="pays" name="pays" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="FR" type="text"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Identifiants Uniques Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-on-surface">
+                    <span class="material-symbols-outlined text-on-surface-variant">fingerprint</span>
+                    <span class="font-semibold">Identifiants Uniques</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_more</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content hidden">
+                  <div class="space-y-xs glow-focus">
+                    <label for="nir" class="text-xs text-on-surface-variant">Numéro de sécurité sociale (NIR)</label>
+                    <input id="nir" name="nir" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="13 ou 15 chiffres" type="text"/>
+                  </div>
+                  <div class="space-y-xs glow-focus">
+                    <label for="iban" class="text-xs text-on-surface-variant">IBAN</label>
+                    <input id="iban" name="iban" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="FR76..." type="text"/>
+                  </div>
+                  <div class="grid grid-cols-3 gap-xs">
+                    <div class="space-y-xs glow-focus col-span-1">
+                      <label for="bic" class="text-xs text-on-surface-variant">BIC</label>
+                      <input id="bic" name="bic" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-1 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="BNPAFRPP" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus col-span-2">
+                      <label for="siret" class="text-xs text-on-surface-variant">SIRET (14 chf)</label>
+                      <input id="siret" name="siret" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-2 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="SIRET" type="text"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Véhicules Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-on-surface">
+                    <span class="material-symbols-outlined text-on-surface-variant">directions_car</span>
+                    <span class="font-semibold">Véhicules</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_more</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content hidden">
+                  <div class="space-y-xs glow-focus">
+                    <label for="vin_plaque" class="text-xs text-on-surface-variant">Plaque ou VIN</label>
+                    <input id="vin_plaque" name="vin_plaque" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="AB-123-CD ou VIN" type="text"/>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="marque" class="text-xs text-on-surface-variant">Marque</label>
+                      <input id="marque" name="marque" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Renault" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="modele" class="text-xs text-on-surface-variant">Modèle</label>
+                      <input id="modele" name="modele" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Clio" type="text"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Profil Professionnel Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-on-surface">
+                    <span class="material-symbols-outlined text-on-surface-variant">work</span>
+                    <span class="font-semibold">Profil Professionnel</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_more</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content hidden">
+                  <div class="space-y-xs glow-focus">
+                    <label for="societe" class="text-xs text-on-surface-variant">Société / Entreprise</label>
+                    <input id="societe" name="societe" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Nom de l'entreprise" type="text"/>
+                  </div>
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="profession" class="text-xs text-on-surface-variant">Profession</label>
+                      <input id="profession" name="profession" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Métier" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="fonction" class="text-xs text-on-surface-variant">Fonction</label>
+                      <input id="fonction" name="fonction" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Poste" type="text"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gaming & FiveM Section -->
+              <div class="border border-outline-variant rounded-lg bg-surface-container-low overflow-hidden accordion-item">
+                <button type="button" class="w-full flex items-center justify-between p-sm hover:bg-surface-variant/30 transition-colors accordion-header">
+                  <div class="flex items-center gap-sm text-on-surface">
+                    <span class="material-symbols-outlined text-on-surface-variant">sports_esports</span>
+                    <span class="font-semibold">Gaming &amp; FiveM</span>
+                  </div>
+                  <span class="material-symbols-outlined text-on-surface-variant accordion-chevron">expand_more</span>
+                </button>
+                <div class="p-sm pt-0 space-y-md accordion-content hidden">
+                  <div class="grid grid-cols-2 gap-md">
+                    <div class="space-y-xs glow-focus">
+                      <label for="steam_id" class="text-xs text-on-surface-variant">Steam ID</label>
+                      <input id="steam_id" name="steam_id" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Steam" type="text"/>
+                    </div>
+                    <div class="space-y-xs glow-focus">
+                      <label for="discord_id" class="text-xs text-on-surface-variant">Discord ID</label>
+                      <input id="discord_id" name="discord_id" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="Discord numeric ID" type="text"/>
+                    </div>
+                  </div>
+                  <div class="space-y-xs glow-focus">
+                    <label for="fivem_id" class="text-xs text-on-surface-variant">FiveM ID</label>
+                    <input id="fivem_id" name="fivem_id" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:ring-0" placeholder="FiveM ID" type="text"/>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Options: Flexible, Page, Per_Page -->
+              <div class="border-t border-outline-variant pt-md space-y-md">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-on-surface-variant font-medium">Recherche flexible (Floue)</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="search-flexible" name="flexible" class="sr-only peer" checked>
+                    <div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-outline after:border-outline-variant after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-on-primary-container"></div>
+                  </label>
+                </div>
+                <div class="grid grid-cols-2 gap-md">
+                  <div class="space-y-xs">
+                    <label for="search-per-page" class="text-xs text-on-surface-variant">Résultats / page</label>
+                    <select id="search-per-page" name="per_page" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none">
+                      <option value="10" selected>10 (Starter)</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100 (Enterprise)</option>
+                    </select>
+                  </div>
+                  <div class="space-y-xs">
+                    <label for="search-page" class="text-xs text-on-surface-variant">Page</label>
+                    <input id="search-page" name="page" class="w-full bg-surface-container-highest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none" value="1" min="1" type="number"/>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+
+            <!-- Search Action Footer -->
+            <div class="p-md border-t border-outline-variant/30 bg-surface-container-lowest/80 mt-auto z-10">
+              <button type="submit" form="search-form" id="btn-search-submit" class="w-full bg-gradient-to-r from-primary-container to-secondary text-surface font-black py-3.5 rounded-xl hover:shadow-[0_4px_25px_rgba(0,240,255,0.35)] hover:brightness-110 active:scale-95 transition-all flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined font-bold">search</span>Lancer la recherche
+              </button>
+            </div>
+          </aside>
+
+          <!-- Right Column: Results Area / Viewports -->
+          <section id="results-viewport" class="flex-1 glass-panel rounded-2xl flex flex-col relative overflow-visible md:overflow-hidden min-h-[400px] md:min-h-0">
+            <!-- Subtle ambient glow in background -->
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-container/5 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+            
+            <!-- STATE: Empty State -->
+            <div id="state-empty" class="state-panel flex-1 flex flex-col items-center justify-center text-center p-xl gap-md z-10">
+              <div class="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant shadow-lg mb-4">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant">search</span>
+              </div>
+              <h3 class="text-headline-md font-bold text-on-surface">Aucune recherche active</h3>
+              <p class="text-body-lg text-on-surface-variant leading-relaxed max-w-md">
+                Remplissez un ou plusieurs critères de recherche dans le panneau de gauche et lancez la requête pour explorer la base de données.
+              </p>
+            </div>
+
+            <!-- STATE: Loading State -->
+            <div id="state-loading" class="state-panel hidden flex-1 flex flex-col items-center justify-center text-center p-xl gap-md z-10">
+              <div class="w-16 h-16 border-4 border-primary-container/10 border-t-primary-container rounded-full animate-spin mb-4"></div>
+              <h3 class="text-headline-md font-bold text-on-surface">Interrogation des bases MB15...</h3>
+              <p class="text-body-lg text-on-surface-variant max-w-md">
+                Veuillez patienter pendant la recherche et le regroupement des doublons.
+              </p>
+              
+              <!-- Skeleton Loaders -->
+              <div class="w-full max-w-xl space-y-4 mt-6">
+                <div class="h-12 bg-surface-variant/30 rounded-lg animate-pulse w-full"></div>
+                <div class="h-12 bg-surface-variant/30 rounded-lg animate-pulse w-full"></div>
+                <div class="h-12 bg-surface-variant/30 rounded-lg animate-pulse w-full"></div>
+              </div>
+            </div>
+
+            <!-- STATE: Error State -->
+            <div id="state-error" class="state-panel hidden flex-1 flex flex-col items-center justify-center text-center p-xl gap-md z-10">
+              <div class="w-20 h-20 rounded-full bg-error-container/20 flex items-center justify-center border border-error/30 text-error shadow-lg mb-4">
+                <span class="material-symbols-outlined text-4xl">error</span>
+              </div>
+              <h3 class="text-headline-md font-bold text-error" id="error-title">Erreur d'interrogation</h3>
+              <p class="text-body-lg text-on-surface-variant leading-relaxed max-w-md" id="error-description">
+                Impossible de joindre le serveur.
+              </p>
+              <button id="btn-error-retry" class="mt-4 px-lg py-2 border border-outline-variant hover:border-primary-container text-on-surface hover:text-primary-container rounded-lg transition-colors">
+                Réessayer
+              </button>
+            </div>
+
+            <!-- STATE: No Results -->
+            <div id="state-no-results" class="state-panel hidden flex-1 flex flex-col items-center justify-center text-center p-xl gap-md z-10">
+              <div class="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant shadow-lg mb-4">
+                <span class="material-symbols-outlined text-4xl text-secondary">person_off</span>
+              </div>
+              <h3 class="text-headline-md font-bold text-on-surface">Aucune correspondance trouvée</h3>
+              <p class="text-body-lg text-on-surface-variant leading-relaxed max-w-md">
+                Aucun profil ne correspond aux critères saisis. Essayez d'activer l'option "Recherche Flexible" ou de réduire le nombre de critères.
+              </p>
+            </div>
+
+            <!-- STATE: Results Table -->
+            <div id="state-results" class="state-panel hidden flex-1 flex flex-col h-full overflow-hidden z-10">
+              <!-- Result Stats Banner -->
+              <div id="results-stats-banner" class="p-md border-b border-outline-variant bg-surface-container/30 flex flex-col sm:flex-row gap-md justify-between items-center shrink-0">
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-sm w-full sm:w-auto">
+                  <span id="results-count-badge" class="bg-primary-container/10 border border-primary-container/30 text-primary-container font-bold text-xs px-2.5 py-1 rounded">0 résultats</span>
+                  <span id="results-took-badge" class="bg-surface-variant/30 text-on-surface-variant font-label-mono text-xs px-2.5 py-1 rounded font-mono">-- ms</span>
+                  
+                  <!-- View Switcher -->
+                  <div class="flex items-center gap-xs bg-surface-container-high/50 p-0.5 rounded-lg border border-outline-variant/20">
+                    <button type="button" id="btn-view-cards" class="px-2 py-0.5 text-[10px] rounded-md flex items-center gap-xs transition-all bg-primary-container text-on-primary-container font-bold" title="Vue Fiches Dossier">
+                      <span class="material-symbols-outlined text-[14px]">grid_view</span>Fiches
+                    </button>
+                    <button type="button" id="btn-view-table" class="px-2 py-0.5 text-[10px] rounded-md flex items-center gap-xs transition-all text-on-surface-variant hover:text-on-surface" title="Vue Table Liste">
+                      <span class="material-symbols-outlined text-[14px]">format_list_bulleted</span>Liste
+                    </button>
+                  </div>
+                </div>
+                <!-- Pagination Controls -->
+                <div id="search-pagination-controls" class="flex gap-xs items-center justify-center w-full sm:w-auto">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+              <!-- Results View Switcher Containers -->
+              <div class="flex-grow overflow-y-auto">
+                <!-- Vue 1: Dossiers Grid (Cards) -->
+                <div id="search-results-cards" class="grid grid-cols-1 xl:grid-cols-2 gap-md p-md">
+                  <!-- Dynamic cards injected via JS -->
+                </div>
+
+                <!-- Vue 2: Table (Liste) -->
+                <div id="search-results-table-container" class="hidden overflow-x-auto w-full">
+                  <table class="min-w-[700px] md:min-w-full text-left border-collapse">
+                    <thead>
+                      <tr class="bg-surface-container/60 sticky top-0 border-b border-outline-variant backdrop-blur-md">
+                        <th class="p-md text-xs font-semibold text-on-surface-variant uppercase">Confiance</th>
+                        <th class="p-md text-xs font-semibold text-on-surface-variant uppercase">Nom Complet</th>
+                        <th class="p-md text-xs font-semibold text-on-surface-variant uppercase">Coordonnées</th>
+                        <th class="p-md text-xs font-semibold text-on-surface-variant uppercase">Localisation</th>
+                        <th class="p-md text-xs font-semibold text-on-surface-variant uppercase">Sources</th>
+                        <th class="p-md text-xs font-semibold text-on-surface-variant uppercase text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="search-results-tbody" class="divide-y divide-outline-variant/30">
+                      <!-- Dynamic rows injected via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </section>
+        </div>
+
+        <!-- ================= TAB 2: REVERSE LOOKUP ================= -->
+        <div id="tab-content-lookup" class="tab-panel hidden h-full p-md md:p-lg overflow-y-auto">
+          <div class="max-w-4xl mx-auto space-y-md md:space-y-lg">
+            
+            <!-- Selector and Input Card -->
+            <div class="glass-panel rounded-2xl p-md md:p-lg relative overflow-hidden">
+              <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+              
+              <!-- Tab Header options -->
+              <div class="flex border-b border-outline-variant/60 pb-md gap-sm overflow-x-auto">
+                <button class="lookup-tab-btn flex items-center gap-xs px-md py-sm bg-primary-container/10 border border-primary-container/30 text-primary-container rounded-xl font-semibold text-sm transition-all shrink-0" data-lookup-type="email">
+                  <span class="material-symbols-outlined text-[18px]">mail</span>Email
+                </button>
+                <button class="lookup-tab-btn flex items-center gap-xs px-md py-sm hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface rounded-xl text-sm transition-all shrink-0" data-lookup-type="phone">
+                  <span class="material-symbols-outlined text-[18px]">call</span>Téléphone
+                </button>
+                <button class="lookup-tab-btn flex items-center gap-xs px-md py-sm hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface rounded-xl text-sm transition-all shrink-0" data-lookup-type="iban">
+                  <span class="material-symbols-outlined text-[18px]">credit_card</span>IBAN
+                </button>
+              </div>
+
+              <!-- Lookup Form -->
+              <form id="lookup-form" class="mt-lg space-y-md">
+                <div class="flex flex-col sm:flex-row gap-sm sm:gap-md">
+                  <div class="flex-1 relative glow-focus rounded-xl">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" id="lookup-input-icon">mail</span>
+                    <input id="lookup-query" required class="w-full h-14 bg-surface-container-highest border border-outline-variant rounded-xl pl-12 pr-4 text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-0 text-body-lg text-sm md:text-body-lg" placeholder="Saisissez une adresse email (ex: jean.dupont@gmail.com)" type="text"/>
+                  </div>
+                  <button type="submit" id="btn-lookup-submit" class="bg-primary-container text-on-primary-container font-bold px-xl h-14 rounded-xl hover:bg-primary transition-colors flex justify-center items-center gap-2 w-full sm:w-auto">
+                    <span class="material-symbols-outlined">search</span>Rechercher
+                  </button>
+                </div>
+                <p id="lookup-help-text" class="text-xs text-on-surface-variant font-medium">Retrouvez le nom, prénom, téléphone, et adresse d'un individu à partir de son email.</p>
+              </form>
+            </div>
+
+            <!-- Viewport for Lookup Results -->
+            <div id="lookup-results-viewport" class="min-h-[300px]">
+              
+              <!-- Empty state -->
+              <div id="lookup-state-empty" class="glass-panel rounded-2xl p-md md:p-xl flex flex-col items-center justify-center text-center gap-md">
+                <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant shadow-lg mb-2">
+                  <span class="material-symbols-outlined text-3xl text-on-surface-variant text-primary-container">troubleshoot</span>
+                </div>
+                <h4 class="font-bold text-on-surface">Prêt pour la recherche inversée</h4>
+                <p class="text-body-md text-on-surface-variant max-w-sm">
+                  Sélectionnez le type d'identifiant ci-dessus et saisissez sa valeur pour localiser son détenteur.
+                </p>
+              </div>
+
+              <!-- Loading state -->
+              <div id="lookup-state-loading" class="hidden glass-panel rounded-2xl p-md md:p-xl flex flex-col items-center justify-center text-center gap-md">
+                <div class="w-12 h-12 border-4 border-primary-container/10 border-t-primary-container rounded-full animate-spin mb-2"></div>
+                <h4 class="font-bold text-on-surface">Recherche en cours dans la base de données...</h4>
+                <p class="text-body-md text-on-surface-variant">Extraction en cours.</p>
+              </div>
+
+              <!-- Error state -->
+              <div id="lookup-state-error" class="hidden glass-panel rounded-2xl p-md md:p-xl flex flex-col items-center justify-center text-center gap-md">
+                <div class="w-16 h-16 rounded-full bg-error-container/20 flex items-center justify-center border border-error/30 text-error shadow-lg mb-2">
+                  <span class="material-symbols-outlined text-3xl">x_circle</span>
+                </div>
+                <h4 class="font-bold text-error">Erreur de lookup</h4>
+                <p id="lookup-error-desc" class="text-body-md text-on-surface-variant">Une erreur s'est produite.</p>
+              </div>
+
+              <!-- Success Card -->
+              <div id="lookup-profile-card" class="hidden glass-panel rounded-2xl p-md md:p-lg relative overflow-hidden space-y-md md:space-y-lg">
+                <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+                
+                <!-- Header details -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-md sm:gap-lg border-b border-outline-variant/50 pb-md md:pb-lg w-full">
+                  <div class="flex items-center gap-md">
+                    <div class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-tr from-primary-container to-secondary rounded-2xl flex items-center justify-center text-on-primary-container shadow-md shrink-0">
+                      <span class="material-symbols-outlined text-2xl md:text-3xl font-black">person</span>
+                    </div>
+                    <div>
+                      <h3 id="lookup-profile-fullname" class="text-xl md:text-headline-md font-bold text-on-surface leading-tight">Jean Dupont</h3>
+                      <p id="lookup-profile-sub" class="text-on-surface-variant text-xs md:text-sm mt-1">Coordonnées issues du Reverse Lookup</p>
+                    </div>
+                  </div>
+                  <div class="mt-md sm:mt-0 sm:ml-auto w-full sm:w-auto">
+                    <div id="lookup-confidence-badge" class="bg-surface-container border border-outline-variant/60 rounded-2xl px-md py-1.5 flex flex-row sm:flex-col items-center justify-between sm:justify-center gap-sm sm:gap-0 font-mono">
+                      <span class="text-[9px] text-on-surface-variant uppercase tracking-wider font-bold">SCORE</span>
+                      <span id="lookup-confidence-value" class="text-primary-container font-black text-lg md:text-xl leading-none mt-0 sm:mt-1">85%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detail grids -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-md md:gap-lg">
+                  
+                  <!-- Identité Section -->
+                  <div class="space-y-md">
+                    <h4 class="text-xs uppercase tracking-wider text-on-surface-variant font-bold border-b border-outline-variant/30 pb-sm flex items-center gap-xs">
+                      <span class="material-symbols-outlined text-[16px] text-primary-container">badge</span>Identité
+                    </h4>
+                    <ul id="lookup-details-identity" class="space-y-sm text-sm">
+                      <!-- JS Injected rows -->
+                    </ul>
+                  </div>
+
+                  <!-- Contact Section -->
+                  <div class="space-y-md">
+                    <h4 class="text-xs uppercase tracking-wider text-on-surface-variant font-bold border-b border-outline-variant/30 pb-sm flex items-center gap-xs">
+                      <span class="material-symbols-outlined text-[16px] text-primary-container">alternate_email</span>Contact
+                    </h4>
+                    <ul id="lookup-details-contact" class="space-y-sm text-sm">
+                      <!-- JS Injected rows -->
+                    </ul>
+                  </div>
+
+                  <!-- Localisation Section -->
+                  <div class="col-span-1 md:col-span-2 space-y-md">
+                    <h4 class="text-xs uppercase tracking-wider text-on-surface-variant font-bold border-b border-outline-variant/30 pb-sm flex items-center gap-xs">
+                      <span class="material-symbols-outlined text-[16px] text-primary-container">map</span>Localisation
+                    </h4>
+                    <ul id="lookup-details-location" class="grid grid-cols-1 sm:grid-cols-2 gap-md text-sm">
+                      <!-- JS Injected rows -->
+                    </ul>
+                  </div>
+
+                  <!-- Sources Section -->
+                  <div class="col-span-1 md:col-span-2 space-y-md">
+                    <h4 class="text-xs uppercase tracking-wider text-on-surface-variant font-bold border-b border-outline-variant/30 pb-sm flex items-center gap-xs">
+                      <span class="material-symbols-outlined text-[16px] text-primary-container">dns</span>Sources détectées
+                    </h4>
+                    <div id="lookup-sources-pills" class="flex flex-wrap gap-sm">
+                      <!-- JS Injected pills -->
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Action Footer -->
+                <div class="border-t border-outline-variant/50 pt-lg flex justify-end">
+                  <button id="btn-lookup-export" class="bg-surface-variant/40 hover:bg-surface-variant text-on-surface border border-outline-variant font-bold px-lg py-2.5 rounded-xl flex items-center gap-xs transition-colors w-full sm:w-auto justify-center">
+                    <span class="material-symbols-outlined">download</span>Exporter la fiche profil
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================= TAB 3: STATISTICS & KEY ================= -->
+        <div id="tab-content-stats" class="tab-panel hidden h-full p-md md:p-lg overflow-y-auto">
+          <div class="max-w-4xl mx-auto space-y-md md:space-y-lg">
+            
+            <!-- Top stats widgets grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-md md:gap-lg">
+              
+              <!-- Plan Description Hero -->
+              <div class="glass-panel rounded-2xl p-md md:p-lg flex flex-col justify-between relative overflow-hidden h-auto md:h-[240px] py-md gap-md md:gap-0">
+                <!-- Glowing effect -->
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 rounded-full blur-2xl"></div>
+                <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-secondary/50 to-transparent"></div>
+                
+                <div class="flex justify-between items-start">
+                  <div>
+                    <span class="text-[10px] text-secondary font-bold uppercase tracking-wider">VOTRE PLAN ACTUEL</span>
+                    <h3 id="stats-plan-name" class="text-2xl md:text-3xl font-black text-on-surface mt-2 tracking-tighter">STARTER</h3>
+                  </div>
+                  <div class="flex gap-xs items-center shrink-0">
+                    <button type="button" id="btn-refresh-stats" class="w-8 h-8 rounded-lg bg-surface-variant/40 hover:bg-surface-variant text-on-surface-variant hover:text-on-surface border border-outline-variant/30 flex items-center justify-center transition-all" title="Actualiser les données">
+                      <span class="material-symbols-outlined text-[18px]">sync</span>
+                    </button>
+                    <div class="w-10 h-10 rounded-2xl bg-secondary-container/20 border border-secondary/30 flex items-center justify-center text-secondary">
+                      <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">shield</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-sm md:gap-md border-t border-outline-variant/30 pt-md">
+                  <div>
+                    <span class="text-[10px] md:text-xs text-on-surface-variant block">Limite par jour</span>
+                    <span id="stats-quota-limit" class="font-bold text-xs md:text-sm text-on-surface">1 000</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] md:text-xs text-on-surface-variant block">Résultats / requête</span>
+                    <span id="stats-per-query" class="font-bold text-xs md:text-sm text-on-surface">10</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] md:text-xs text-on-surface-variant block">Pagination active</span>
+                    <span id="stats-pagination-status" class="font-bold text-xs md:text-sm text-on-surface">Non</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] md:text-xs text-on-surface-variant block">Logs API</span>
+                    <span id="stats-logs-status" class="font-bold text-xs md:text-sm text-on-surface">Starter (Page 1)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Circular usage dashboard -->
+              <div class="glass-panel rounded-2xl p-md md:p-lg flex flex-col items-center justify-center text-center relative overflow-hidden h-auto md:h-[240px] py-md">
+                <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+                <h4 class="font-semibold text-on-surface text-xs md:text-sm uppercase tracking-wider mb-sm">Consommation journalière</h4>
+                
+                <div class="flex flex-col sm:flex-row items-center gap-md sm:gap-xl mt-sm w-full justify-center">
+                  <!-- Circular Gauge -->
+                  <div class="relative w-28 h-28 md:w-32 md:h-32 flex items-center justify-center shrink-0">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                      <circle class="text-surface-variant/40 fill-none stroke-current" stroke-width="8" cx="60" cy="60" r="52"></circle>
+                      <circle id="gauge-circle-fill" class="text-primary-container fill-none stroke-current transition-all duration-800" stroke-width="8" stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round" cx="60" cy="60" r="52"></circle>
+                    </svg>
+                    <div class="absolute flex flex-col items-center justify-center font-mono">
+                      <span id="gauge-text-percent" class="text-xl md:text-2xl font-black text-primary-container">0%</span>
+                      <span class="text-[8px] md:text-[9px] text-on-surface-variant uppercase font-bold tracking-wider leading-none">UTILISÉ</span>
+                    </div>
+                  </div>
+
+                  <!-- Statistics -->
+                  <div class="text-center sm:text-left space-y-sm sm:space-y-md font-mono mt-sm sm:mt-0">
+                    <div>
+                      <span id="stats-used-req" class="text-lg md:text-xl font-black text-on-surface leading-none block">0</span>
+                      <span class="text-[10px] md:text-xs text-on-surface-variant uppercase">Effectuées</span>
+                    </div>
+                    <div class="border-t border-outline-variant/30 pt-sm">
+                      <span id="stats-remaining-req" class="text-lg md:text-xl font-black text-primary-container leading-none block">1 000</span>
+                      <span class="text-[10px] md:text-xs text-on-surface-variant uppercase">Restantes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+
+
+          </div>
+        </div>
+
+
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ================= PROFILE DETAILS MODAL ================= -->
+  <div id="profile-detail-modal" class="modal-backdrop fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-50 hidden p-sm">
+    <div class="modal-card glass-panel w-full max-w-[680px] max-h-[90vh] md:max-h-[85vh] rounded-2xl flex flex-col overflow-hidden relative animate-fade-in shadow-2xl">
+      <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+      
+      <!-- Modal Header -->
+      <div class="p-lg border-b border-outline-variant flex justify-between items-center shrink-0 bg-surface-container-lowest/30">
+        <div class="flex items-center gap-md">
+          <div class="w-10 h-10 bg-primary-container/10 border border-primary-container/30 text-primary-container rounded-lg flex items-center justify-center">
+            <span class="material-symbols-outlined">badge</span>
+          </div>
+          <div>
+            <h3 id="modal-fullname" class="text-headline-sm font-bold text-on-surface leading-tight">Prénom Nom</h3>
+            <p id="modal-sub" class="text-xs text-on-surface-variant font-mono mt-1">Dossier consolidé</p>
+          </div>
+        </div>
+        <button id="btn-close-modal" class="w-8 h-8 rounded-full hover:bg-surface-variant/40 text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-lg overflow-y-auto space-y-md">
+        
+        <!-- Score bar -->
+        <div class="bg-surface-container/40 border border-outline-variant rounded-xl p-md space-y-xs">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-on-surface-variant font-semibold">Indice de confiance</span>
+            <span id="modal-confidence-val" class="font-mono font-bold text-primary-container">0%</span>
+          </div>
+          <div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+            <div id="modal-confidence-bar" class="h-full bg-gradient-to-r from-primary-container to-secondary w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Subtabs -->
+        <div class="flex border-b border-outline-variant/60 gap-xs pb-1 shrink-0">
+          <button class="modal-tab-btn px-4 py-2 bg-surface-variant/20 text-primary-container rounded-md font-semibold text-xs transition-all" data-m-tab="identity">
+            Identité
+          </button>
+          <button class="modal-tab-btn px-4 py-2 hover:bg-surface-variant/20 text-on-surface-variant hover:text-on-surface rounded-md text-xs transition-all" data-m-tab="contact">
+            Contacts
+          </button>
+          <button class="modal-tab-btn px-4 py-2 hover:bg-surface-variant/20 text-on-surface-variant hover:text-on-surface rounded-md text-xs transition-all" data-m-tab="address">
+            Adresse
+          </button>
+          <button class="modal-tab-btn px-4 py-2 hover:bg-surface-variant/20 text-on-surface-variant hover:text-on-surface rounded-md text-xs transition-all" data-m-tab="extra">
+            Autres
+          </button>
+        </div>
+
+        <!-- Subtab panels -->
+        <div class="modal-tab-contents min-h-[180px]">
+          
+          <!-- Identity subpanel -->
+          <div id="m-panel-identity" class="modal-tab-panel space-y-0.5">
+            <table class="w-full text-sm border-collapse">
+              <tbody id="modal-table-identity" class="divide-y divide-outline-variant/10">
+                <!-- JS Injected rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Contact subpanel -->
+          <div id="m-panel-contact" class="modal-tab-panel hidden space-y-0.5">
+            <table class="w-full text-sm border-collapse">
+              <tbody id="modal-table-contact" class="divide-y divide-outline-variant/10">
+                <!-- JS Injected rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Address subpanel -->
+          <div id="m-panel-address" class="modal-tab-panel hidden space-y-0.5">
+            <table class="w-full text-sm border-collapse">
+              <tbody id="modal-table-address" class="divide-y divide-outline-variant/10">
+                <!-- JS Injected rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Extras subpanel -->
+          <div id="m-panel-extra" class="modal-tab-panel hidden space-y-0.5">
+            <table class="w-full text-sm border-collapse">
+              <tbody id="modal-table-extra" class="divide-y divide-outline-variant/10">
+                <!-- JS Injected rows -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Original sources pills -->
+        <div class="space-y-sm">
+          <h4 class="text-xs uppercase tracking-wider text-on-surface-variant font-bold border-b border-outline-variant/30 pb-xs">
+            Sources d'origine
+          </h4>
+          <div id="modal-sources-pills" class="flex flex-wrap gap-xs pt-1">
+            <!-- JS Injected pills -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-md md:p-lg border-t border-outline-variant flex flex-col sm:flex-row justify-end gap-sm md:gap-md shrink-0 bg-surface-container-lowest/30 w-full">
+        <button id="btn-modal-copy-json" class="bg-surface-variant/40 hover:bg-surface-variant text-on-surface border border-outline-variant font-bold px-md py-2 rounded-lg flex items-center justify-center gap-xs text-xs transition-colors w-full sm:w-auto">
+          <span class="material-symbols-outlined text-[16px]">content_copy</span>Copier JSON Brut
+        </button>
+        <button id="btn-modal-export" class="bg-primary-container hover:bg-primary text-on-primary-container font-bold px-md py-2 rounded-lg flex items-center justify-center gap-xs text-xs transition-colors w-full sm:w-auto">
+          <span class="material-symbols-outlined text-[16px]">download</span>Télécharger Fiche (JSON)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- App Main Interaction Script -->
+  <script src="app.js?v=8"></script>
+</body>
+</html>
