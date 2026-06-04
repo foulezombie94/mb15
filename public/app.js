@@ -258,6 +258,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- MOBILE NAV HIDE ON INPUT FOCUS ---
+  function initMobileNavHiding() {
+    const mobileNav = document.querySelector('nav.fixed');
+    document.addEventListener('focusin', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+        if (window.innerWidth < 768 && mobileNav) {
+          mobileNav.classList.add('mobile-nav-hidden');
+        }
+      }
+    });
+    document.addEventListener('focusout', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+        if (window.innerWidth < 768 && mobileNav) {
+          mobileNav.classList.remove('mobile-nav-hidden');
+        }
+      }
+    });
+  }
+  
   // --- THEME MANAGEMENT ---
   function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -282,6 +301,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // --- INIT ALL ---
+  initTheme();
+  initMobileNavHiding();
 
   // --- ROUTING / NAVIGATION ---
   el.menuItems.forEach(item => {

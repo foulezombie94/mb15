@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .glass-panel {
+    background: rgba(17, 24, 39, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(132, 148, 149, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: all 0.3s ease;
+  }
+  
+  .glass-panel:hover {
+    border-color: rgba(0, 240, 255, 0.15);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 240, 255, 0.03);
+  }
+  
+  /* Premium Input Styling */
+  input[type="text"], input[type="number"], select {
+    background-color: rgba(15, 19, 29, 0.6) !important;
+    border: 1px solid rgba(132, 148, 149, 0.3) !important;
+    border-radius: 12px !important;
+    color: #dfe2f1 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  input[type="text"]:hover, input[type="number"]:hover, select:hover {
+    background-color: rgba(23, 27, 38, 0.8) !important;
+    border-color: rgba(0, 240, 255, 0.3) !important;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    background-color: rgba(10, 14, 24, 0.9) !important;
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25) !important;
+    outline: none !important;
+  }
+  
+  /* Premium Accordions */
+  .accordion-item {
+    border: 1px solid rgba(132, 148, 149, 0.18) !important;
+    border-radius: 14px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+  }
+  .accordion-item:hover {
+    border-color: rgba(0, 240, 255, 0.25) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
+  }
+  
+  .accordion-item.active {
+    border-color: rgba(0, 240, 255, 0.4) !important;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.08);
+    background-color: rgba(23, 27, 38, 0.4) !important;
+  }
+
+  /* Premium Results Row hover highlight */
+  tbody tr {
+    transition: all 0.2s ease-in-out !important;
+  }
+  tbody tr:hover {
+    background-color: rgba(0, 240, 255, 0.03) !important;
+    box-shadow: inset 3px 0 0 #00f0ff;
+  }
+  
+  /* Neon badges and buttons */
+  #results-count-badge {
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+  }
+  #btn-search-submit, #btn-lookup-submit {
+    box-shadow: 0 4px 14px rgba(0, 240, 255, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  #btn-search-submit:hover, #btn-lookup-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 240, 255, 0.45);
+  }
+  #btn-search-submit:active, #btn-lookup-submit:active {
+    transform: translateY(1px);
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 19, 29, 0.5);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(132, 148, 149, 0.3);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.5);
+  }
+  
+  @media (max-width: 767px) {
+    .mobile-nav-hidden {
+      transform: translateY(120%) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    nav.fixed {
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease !important;
+    }
+  }
+}

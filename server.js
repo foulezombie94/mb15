@@ -66,7 +66,7 @@ const getBrixHeaders = () => {
   return {
     'X-API-Key': BRIX_API_KEY,
     'Content-Type': 'application/json',
-    'User-Agent': 'MB15Dashboard/1.0 (NodeJS Proxy)'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   };
 };
 
@@ -89,7 +89,22 @@ const forwardRateLimitHeaders = (brixRes, expressRes) => {
 // Route: API Health
 app.get('/api/health', async (req, res) => {
   try {
-    const response = await fetch(`${BRIX_BASE_URL}/health`);
+    const response = await fetch(`${BRIX_BASE_URL}/health`, {
+      method: 'GET',
+      headers: getBrixHeaders() // Now using headers here too
+    });
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response in health check:', text.substring(0, 500));
+      return res.status(502).json({
+        status: 502,
+        message: 'Invalid response from upstream API (Possible Cloudflare Block)',
+        error: text.substring(0, 100)
+      });
+    }
+
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (error) {
@@ -111,6 +126,18 @@ app.get('/api/me', checkBrixApiKey, async (req, res) => {
     });
 
     forwardRateLimitHeaders(response, res);
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response in /api/me:', text.substring(0, 500));
+      return res.status(502).json({
+        status: 502,
+        message: 'Invalid response from upstream API (Possible Cloudflare Block)',
+        error: text.substring(0, 100)
+      });
+    }
+
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (error) {
@@ -135,6 +162,18 @@ app.post('/api/search', checkBrixApiKey, async (req, res) => {
     });
 
     forwardRateLimitHeaders(response, res);
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response in /api/search:', text.substring(0, 500));
+      return res.status(502).json({
+        status: 502,
+        message: 'Invalid response from upstream API (Possible Cloudflare Block)',
+        error: text.substring(0, 100)
+      });
+    }
+
     const data = await response.json();
     console.log('BrixHub Response Status:', response.status);
     console.log('BrixHub Response Meta:', JSON.stringify(data.meta || {}, null, 2));
@@ -184,6 +223,18 @@ app.get('/api/lookup/:type/:value', checkBrixApiKey, async (req, res) => {
     });
 
     forwardRateLimitHeaders(response, res);
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON response in lookup:', text.substring(0, 500));
+      return res.status(502).json({
+        status: 502,
+        message: 'Invalid response from upstream API (Possible Cloudflare Block)',
+        error: text.substring(0, 100)
+      });
+    }
+
     const data = await response.json();
 
     // Filter lookup profile
