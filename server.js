@@ -13,12 +13,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BRIX_API_KEY = process.env.BRIX_API_KEY || 'brix_fB03a4Lt76Z9yEpvbWVnbyUwGmjXqad2FrWztKg7vg4VlhzK';
+const BRIX_API_KEY = 'brix_fB03a4Lt76Z9yEpvbWVnbyUwGmjXqad2FrWztKg7vg4VlhzK';
 const BRIX_BASE_URL = 'https://brixhub.net/api/v1';
-
-if (!BRIX_API_KEY) {
-  console.warn('WARNING: BRIX_API_KEY is not defined in the environment variables. Please add it to your environment.');
-}
 
 // Native cURL fetch helper to bypass Cloudflare bot/TLS fingerprinting rules
 const fetchViaCurl = (url, options = {}) => {
