@@ -168,6 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // Set operational status by default from cache
       el.healthDot.className = 'w-2 h-2 rounded-full bg-success';
       el.healthText.textContent = 'Service Opérationnel';
+
+      // Fetch fresh data in the background to ensure it is up-to-date
+      fetchAccountDetails();
+      fetchHealthStatus();
     } else {
       // First load: query the API to setup UI counters
       fetchAccountDetails();
@@ -422,15 +426,16 @@ document.addEventListener('DOMContentLoaded', () => {
     el.headerPlanName.textContent = cleanPlan;
     el.headerQuotaRemaining.textContent = info.daily_remaining.toLocaleString();
     
-    // Sidebar quota monitor
-    el.sidebarQuotaPercent.textContent = `${state.quota.percent}%`;
-    el.sidebarQuotaFillBar.style.width = `${state.quota.percent}%`;
+    // Sidebar quota monitor - Calculate remaining quota percentage
+    const remainingPercent = info.daily_quota > 0 ? Math.max(0, Math.min(100, Math.round((info.daily_remaining / info.daily_quota) * 100))) : 100;
+    el.sidebarQuotaPercent.textContent = `${remainingPercent}%`;
+    el.sidebarQuotaFillBar.style.width = `${remainingPercent}%`;
     el.sidebarQuotaNumerical.textContent = `${info.daily_used.toLocaleString()} / ${info.daily_quota.toLocaleString()} reqs`;
 
-    // Apply warn status to progress bars if usage is high (>85%)
-    if (state.quota.percent >= 85) {
+    // Apply warn status to progress bars if remaining quota is low
+    if (remainingPercent <= 15) {
       el.sidebarQuotaFillBar.className = "h-full bg-error transition-all duration-500";
-    } else if (state.quota.percent >= 60) {
+    } else if (remainingPercent <= 40) {
       el.sidebarQuotaFillBar.className = "h-full bg-warning transition-all duration-500";
     } else {
       el.sidebarQuotaFillBar.className = "h-full bg-primary-container transition-all duration-500";
@@ -466,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error();
       
       const resData = await response.json();
-      const status = resData.data || 'operational';
+      const status = resData.message || 'operational';
       
       const isOperational = status === 'operational';
       
@@ -511,6 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const limNum = parseInt(limit, 10);
       const usedNum = limNum - remNum;
       const percent = Math.min(100, Math.round((usedNum / limNum) * 100));
+      const remainingPercent = limNum > 0 ? Math.max(0, Math.min(100, Math.round((remNum / limNum) * 100))) : 100;
 
       state.quota.remaining = remNum;
       state.quota.limit = limNum;
@@ -519,9 +525,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update UI widgets
       el.headerQuotaRemaining.textContent = remNum.toLocaleString();
-      el.sidebarQuotaPercent.textContent = `${percent}%`;
-      el.sidebarQuotaFillBar.style.width = `${percent}%`;
+      el.sidebarQuotaPercent.textContent = `${remainingPercent}%`;
+      el.sidebarQuotaFillBar.style.width = `${remainingPercent}%`;
       el.sidebarQuotaNumerical.textContent = `${usedNum.toLocaleString()} / ${limNum.toLocaleString()} reqs`;
+
+      // Apply warn status to progress bars if remaining quota is low
+      if (remainingPercent <= 15) {
+        el.sidebarQuotaFillBar.className = "h-full bg-error transition-all duration-500";
+      } else if (remainingPercent <= 40) {
+        el.sidebarQuotaFillBar.className = "h-full bg-warning transition-all duration-500";
+      } else {
+        el.sidebarQuotaFillBar.className = "h-full bg-primary-container transition-all duration-500";
+      }
+
       saveQuotaToCache();
     }
   }

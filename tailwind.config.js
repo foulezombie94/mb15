@@ -9,6 +9,10 @@ export default {
   theme: {
     extend: {
       "colors": {
+        "success": "#10b981",
+        "success-container": "#10b981",
+        "warning": "#f59e0b",
+        "warning-container": "#f59e0b",
         "on-primary-fixed": "#002022",
         "tertiary": "#f4f6ff",
         "inverse-primary": "#006970",
