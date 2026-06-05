@@ -168,14 +168,22 @@ document.addEventListener('DOMContentLoaded', () => {
       // Set operational status by default from cache
       el.healthDot.className = 'w-2 h-2 rounded-full bg-success';
       el.healthText.textContent = 'Service Opérationnel';
-
-      // Fetch fresh data in the background to ensure it is up-to-date
-      fetchAccountDetails();
-      fetchHealthStatus();
     } else {
-      // First load: query the API to setup UI counters
-      fetchAccountDetails();
-      fetchHealthStatus();
+      // First load: setup default placeholders, no automatic API requests to save quota
+      state.plan = 'starter';
+      state.quota = { used: 0, limit: 1000, remaining: 1000, percent: 100 };
+      
+      updateQuotaUI({
+        plan: state.plan,
+        daily_used: state.quota.used,
+        daily_quota: state.quota.limit,
+        daily_remaining: state.quota.remaining,
+        results_per_query: 10,
+        pagination_enabled: false
+      });
+
+      el.healthDot.className = 'w-2 h-2 rounded-full bg-success';
+      el.healthText.textContent = 'Service Opérationnel';
     }
   }
 
