@@ -1131,9 +1131,11 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       
       el.lookupTabBtns.forEach(b => {
-        b.className = "lookup-tab-btn flex items-center gap-xs px-md py-sm hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface rounded-md text-sm transition-all";
+        b.classList.remove('bg-primary-container/10', 'border-primary-container/30', 'text-primary-container', 'font-semibold');
+        b.classList.add('border-transparent', 'hover:bg-surface-variant/30', 'text-on-surface-variant', 'hover:text-on-surface');
       });
-      btn.className = "lookup-tab-btn flex items-center gap-xs px-md py-sm bg-primary-container/10 border border-primary-container/30 text-primary-container rounded-md font-semibold text-sm transition-all";
+      btn.classList.add('bg-primary-container/10', 'border-primary-container/30', 'text-primary-container', 'font-semibold');
+      btn.classList.remove('border-transparent', 'hover:bg-surface-variant/30', 'text-on-surface-variant', 'hover:text-on-surface');
 
       const lookupType = btn.getAttribute('data-lookup-type');
       state.activeLookupType = lookupType;
