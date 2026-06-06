@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark h-full">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>iOS Dynamic Glassmorphism Magnifier</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* DESIGN SYSTEM & VARIABLES */
+    :root {
+      --x: 180px;
+      --y: 40px;
+      --lens-radius: 70px;
+      --lens-scale: 1.25;
+      --aberration-offset: 1.5px;
+      
+      --bg-primary: #09090b;
+      --bg-surface: rgba(22, 22, 26, 0.7);
+      --border-surface: rgba(255, 255, 255, 0.08);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --ios-red: #ff3b30;
+      --ios-red-glow: rgba(255, 59, 48, 0.4);
+      --ios-cyan: #00f0ff;
+      --ios-blue: #007aff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* BACKGROUND GRADIENT ANIMATION */
+    .bg-mesh-container {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      background-color: #030303;
+      transition: background 0.8s ease;
+    }
+
+    .bg-blob {
+      position: absolute;
+      width: 60vw;
+      height: 60vw;
+      min-width: 400px;
+      min-height: 400px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.45;
+      mix-blend-mode: screen;
+      animation: rotate-blobs 25s infinite alternate ease-in-out;
+      transition: background-color 0.8s ease;
+    }
+
+    .blob-1 {
+      top: -10%;
+      left: -10%;
+      background-color: var(--ios-red);
+      animation-duration: 25s;
+    }
+
+    .blob-2 {
+      bottom: -15%;
+      right: -10%;
+      background-color: #5856d6;
+      animation-duration: 30s;
+      animation-delay: -5s;
+    }
+
+    .blob-3 {
+      top: 40%;
+      left: 20%;
+      background-color: var(--ios-blue);
+      animation-duration: 22s;
+      animation-delay: -10s;
+    }
+
+    .blob-4 {
+      bottom: 20%;
+      left: -10%;
+      background-color: #af52de;
+      animation-duration: 28s;
+      animation-delay: -15s;
+    }
+
+    @keyframes rotate-blobs {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+      50% {
+        transform: translate(5%, 10%) scale(1.1) rotate(180deg);
+      }
+      100% {
+        transform: translate(-5%, -5%) scale(0.9) rotate(360deg);
+      }
+    }
+
+    /* THEMES */
+    .theme-sunset .blob-1 { background-color: #ff375f; }
+    .theme-sunset .blob-2 { background-color: #ff9f0a; }
+    .theme-sunset .blob-3 { background-color: #bf5af2; }
+    .theme-sunset .blob-4 { background-color: #ff453a; }
+
+    .theme-aurora .blob-1 { background-color: #30d158; }
+    .theme-aurora .blob-2 { background-color: #00c7be; }
+    .theme-aurora .blob-3 { background-color: #64d2ff; }
+    .theme-aurora .blob-4 { background-color: #0a84ff; }
+
+    .theme-deepspace .blob-1 { background-color: #1a0933; }
+    .theme-deepspace .blob-2 { background-color: #0d1b2a; }
+    .theme-deepspace .blob-3 { background-color: #3d0066; }
+    .theme-deepspace .blob-4 { background-color: #1b4965; }
+    .theme-deepspace .bg-blob { opacity: 0.35; filter: blur(150px); }
+
+    /* HEADER */
+    header {
+      padding: 24px 40px;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(9, 9, 11, 0.6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .header-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 30%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    /* MAIN CONTAINER LAYOUT */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      padding: 40px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      align-items: center;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        gap: 30px;
+      }
+    }
+
+    /* DEVICE SIMULATOR SECTION */
+    .simulator-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Premium iPhone 15 Pro Max Mockup */
+    .iphone-frame {
+      width: 390px;
+      height: 800px;
+      background-color: #000;
+      border-radius: 54px;
+      padding: 12px;
+      box-shadow: 
+        0px 25px 50px -12px rgba(0, 0, 0, 0.8),
+        0px 0px 0px 4px #2c2c2e,
+        0px 0px 0px 12px #1c1c1e;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 30px;
+      background-color: #000;
+      border-radius: 20px;
+      z-index: 1000;
+      box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.1);
+      transition: width 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .dynamic-island::after {
+      content: '';
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 11px;
+      height: 11px;
+      background: radial-gradient(circle, #1a1c3a 0%, #080a15 80%);
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+
+    /* iPhone Screen Inner */
+    .iphone-screen {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      background: #09090b;
+      border-radius: 43px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Simulated App Background (fits inside screen) */
+    .app-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: radial-gradient(circle at top right, rgba(29, 29, 64, 0.6) 0%, rgba(9, 9, 11, 0.95) 80%);
+      overflow: hidden;
+    }
+
+    .app-bg-glow {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(132, 94, 247, 0.15) 0%, transparent 70%);
+      top: 10%;
+      left: -10%;
+    }
+
+    /* App Shell Content */
+    .app-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      padding-top: 50px; /* Space for status bar & dynamic island */
+    }
+
+    /* Status Bar */
+    .status-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 32px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      z-index: 900;
+      pointer-events: none;
+    }
+
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-battery {
+      width: 20px;
+      height: 10px;
+      border: 1px solid currentColor;
+      border-radius: 3px;
+      padding: 1px;
+      display: flex;
+      position: relative;
+    }
+
+    .status-battery::after {
+      content: '';
+      position: absolute;
+      right: -3px;
+      top: 2px;
+      width: 2px;
+      height: 4px;
+      background: currentColor;
+      border-radius: 0 1px 1px 0;
+    }
+
+    .status-battery-level {
+      width: 80%;
+      height: 100%;
+      background: currentColor;
+      border-radius: 1px;
+    }
+
+    /* THE HERO INSTRUCTION / INTERACTIVE ZONE CONTAINER */
+    .interactive-zone {
+      position: relative;
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    /* ========================================================= */
+    /* THE MAGNIFIER OPTICS - CORE IMPLEMENTATION */
+    /* ========================================================= */
+    
+    .navbar-wrapper {
+      position: relative;
+      width: 100%;
+      height: 80px; /* Hit box zone taller than navbar itself */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: crosshair;
+    }
+
+    /* Base Navbar Layout */
+    .navbar-layer {
+      width: 92%;
+      height: 56px;
+      background: rgba(20, 20, 25, 0.6);
+      backdrop-filter: blur(25px) saturate(190%);
+      -webkit-backdrop-filter: blur(25px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px;
+      box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    }
+
+    /* Layer 1: Normal Base Layer */
+    .base-layer {
+      position: relative;
+      z-index: 2;
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+
+    /* Layer 2: Magnifier Clipped Layer */
+    .magnifier-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 40;
+      /* Perfect circle clipping mask */
+      clip-path: circle(var(--lens-radius) at var(--x) var(--y));
+      opacity: 0;
+      visibility: hidden;
+      transform: translate3d(0, 0, 0); /* Force GPU */
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .magnifier-container.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .magnifier-container .navbar-layer {
+      position: absolute;
+      /* Align precisely over the base layer */
+      left: 4%;
+      top: calc(50% - 28px);
+      width: 92%;
+      height: 56px;
+      background: rgba(22, 22, 28, 0.85); /* Slightly darker and more solid to pop */
+      border-color: rgba(255, 255, 255, 0.15);
+      z-index: 41;
+      /* Magnification scale and center anchor */
+      transform: scale(var(--lens-scale));
+      transform-origin: var(--x) var(--y);
+      box-shadow: none; /* Shadow handled by lens overlay */
+    }
+
+    /* Navigation Tab Styles */
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex: 1;
+      height: 100%;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s ease, transform 0.2s ease;
+      user-select: none;
+    }
+
+    /* Tab Hover & Active States (controlled via JS synchronization) */
+    .tab-item.hovered {
+      color: rgba(255, 255, 255, 0.85);
+      transform: scale(1.05);
+    }
+
+    .tab-item.active {
+      color: var(--text-main);
+    }
+
+    /* SVG Icon styles */
+    .tab-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+    }
+
+    .tab-icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      transition: stroke-width 0.2s ease, transform 0.2s ease;
+    }
+
+    .tab-item.active .tab-icon {
+      stroke-width: 2.5px;
+      transform: scale(1.05);
+    }
+
+    .tab-label {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: -0.1px;
+      transition: font-weight 0.2s ease;
+    }
+
+    .tab-item.active .tab-label {
+      font-weight: 700;
+    }
+
+    /* Badge and Notification Elements */
+    .badge {
+      position: absolute;
+      top: -5px;
+      right: -14px;
+      background: linear-gradient(135deg, #ff3b30 0%, #ff2d55 100%);
+      color: white;
+      font-size: 7px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 8px;
+      min-width: 15px;
+      height: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .status-dot {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      width: 6px;
+      height: 6px;
+      background-color: var(--ios-red);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 6px var(--ios-red-glow);
+    }
+
+    /* Layer 3: 3D Glass Lens Overlay & Chromatic Aberration */
+    .magnifier-lens {
+      position: absolute;
+      width: calc(2 * var(--lens-radius));
+      height: calc(2 * var(--lens-radius));
+      left: calc(var(--x) - var(--lens-radius));
+      top: calc(var(--y) - var(--lens-radius));
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 50;
+      box-sizing: border-box;
+      
+      /* Thick 3D Radial Glass Reflection Gradient */
+      background: radial-gradient(
+        circle at 35% 35%,
+        rgba(255, 255, 255, 0.38) 0%,
+        rgba(255, 255, 255, 0.12) 15%,
+        rgba(255, 255, 255, 0) 45%,
+        rgba(0, 0, 0, 0.25) 75%,
+        rgba(0, 0, 0, 0.65) 100%
+      );
+      
+      /* Chromatic Aberration border shadow (offsets in opposite directions) */
+      box-shadow: 
+        inset 0 0 10px rgba(255, 255, 255, 0.35),
+        inset -4px -4px 8px rgba(0, 0, 0, 0.35),
+        calc(-1 * var(--aberration-offset)) calc(-0.7 * var(--aberration-offset)) calc(3px + var(--aberration-offset)) rgba(255, 45, 85, 0.65), /* Red Shift */
+        calc(1 * var(--aberration-offset)) calc(0.7 * var(--aberration-offset)) calc(3px + var(--aberration-offset)) rgba(0, 240, 255, 0.65),  /* Cyan Shift */
+        0 10px 24px rgba(0, 0, 0, 0.45);
+        
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.85) translate3d(0, 0, 0);
+      transition: 
+        opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+        visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .magnifier-lens.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translate3d(0, 0, 0);
+    }
+
+    /* Glossy 3D crescent reflection highlight at the top of the lens */
+    .magnifier-lens::before {
+      content: '';
+      position: absolute;
+      top: 6%;
+      left: 15%;
+      width: 70%;
+      height: 30%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 100%);
+      border-radius: 50% 50% 40% 40% / 60% 60% 30% 30%;
+    }
+
+    /* Chromatic Aberration applied to Text/Icons inside the magnifier */
+    .magnifier-container .tab-icon {
+      filter: 
+        drop-shadow(calc(-0.8 * var(--aberration-offset)) calc(-0.4 * var(--aberration-offset)) 0 rgba(255, 45, 85, 0.9)) 
+        drop-shadow(calc(0.8 * var(--aberration-offset)) calc(0.4 * var(--aberration-offset)) 0 rgba(0, 240, 255, 0.9));
+    }
+
+    .magnifier-container .tab-label,
+    .magnifier-container .badge {
+      text-shadow: 
+        calc(-0.8 * var(--aberration-offset)) calc(-0.4 * var(--aberration-offset)) 0 rgba(255, 45, 85, 0.9), 
+        calc(0.8 * var(--aberration-offset)) calc(0.4 * var(--aberration-offset)) 0 rgba(0, 240, 255, 0.9);
+    }
+
+    /* Feature toggles for comparison settings */
+    .no-reflection .magnifier-lens {
+      background: none;
+    }
+    .no-reflection .magnifier-lens::before {
+      display: none;
+    }
+    .no-reflection .magnifier-lens {
+      box-shadow: 
+        inset 0 0 2px rgba(255, 255, 255, 0.2),
+        calc(-1 * var(--aberration-offset)) calc(-0.7 * var(--aberration-offset)) calc(3px + var(--aberration-offset)) rgba(255, 45, 85, 0.65), 
+        calc(1 * var(--aberration-offset)) calc(0.7 * var(--aberration-offset)) calc(3px + var(--aberration-offset)) rgba(0, 240, 255, 0.65);
+    }
+
+    .no-aberration .magnifier-lens {
+      box-shadow: 
+        inset 0 0 10px rgba(255, 255, 255, 0.35),
+        inset -4px -4px 8px rgba(0, 0, 0, 0.35),
+        0 10px 24px rgba(0, 0, 0, 0.45);
+    }
+    .no-aberration .tab-icon {
+      filter: none !important;
+    }
+    .no-aberration .tab-label,
+    .no-aberration .badge {
+      text-shadow: none !important;
+    }
+
+
+    /* APP BODY VIEWPORT CONTENT */
+    .app-screen-body {
+      flex: 1;
+      width: 100%;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+    }
+
+    .app-screen-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-screen-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    /* Simulated Views */
+    .view-panel {
+      display: none;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      height: 100%;
+    }
+
+    .view-panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .view-title {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    /* Contacts view */
+    .contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .contact-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 12px;
+      transition: background 0.2s ease;
+    }
+
+    .contact-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .contact-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      background: linear-gradient(135deg, var(--avatar-c1) 0%, var(--avatar-c2) 100%);
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .contact-info {
+      flex: 1;
+    }
+
+    .contact-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .contact-status {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* Calls view */
+    .calls-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .call-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+    }
+
+    .call-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .call-icon {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2px;
+    }
+
+    .call-missed {
+      color: var(--ios-red);
+    }
+    .call-incoming {
+      color: #30d158;
+    }
+
+    .call-details h4 {
+      font-weight: 600;
+      font-size: 12.5px;
+    }
+
+    .call-details p {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .call-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Exchanges (Chats) view */
+    .chat-bubble-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+
+    .chat-bubble.received {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-bubble.sent {
+      background: linear-gradient(135deg, #007aff 0%, #0056b3 100%);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+    }
+
+    /* Settings view */
+    .settings-group {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .settings-row-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .settings-icon-box {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: var(--sett-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-icon {
+      width: 15px;
+      height: 15px;
+      stroke: white;
+      stroke-width: 2.5px;
+    }
+
+    /* iOS Toggle Switch */
+    .ios-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .ios-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .ios-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 34px;
+    }
+
+    .ios-slider:before {
+      content: "";
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    input:checked + .ios-slider {
+      background-color: #30d158;
+    }
+
+    input:checked + .ios-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* CONTROL PANEL PANEL (RIGHT COLUMN) */
+    .control-panel {
+      background: rgba(20, 20, 25, 0.55);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 28px;
+      padding: 30px;
+      height: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+
+    .panel-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 40%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .control-label-wrapper {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .control-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--ios-cyan);
+      font-size: 12px;
+    }
+
+    /* Premium Range Slider styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      transition: transform 0.1s ease, background 0.2s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: var(--ios-cyan);
+    }
+
+    /* Option Toggles */
+    .checkbox-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .checkbox-row span {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* Custom Dropdown select */
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .dropdown select:focus {
+      border-color: var(--ios-cyan);
+    }
+
+    .dropdown::after {
+      content: '▼';
+      font-size: 9px;
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Explanation Text Area */
+    .explanations {
+      flex: 1;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    .explanations h3 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .explanations code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1px 4px;
+      border-radius: 4px;
+      color: #ff79c6;
+    }
+
+    .explanations p {
+      margin-bottom: 10px;
+    }
+
+    .explanations-footer {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.3);
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      margin-top: auto;
+    }
+
+  </style>
+</head>
+<body class="theme-sunset">
+
+  <!-- Fixed Animated Background Grid -->
+  <div class="bg-mesh-container" id="bg-mesh">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+    <div class="bg-blob blob-4"></div>
+  </div>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="header-title">
+      <h1>iOS Dynamic Magnifier</h1>
+      <p>Glassmorphic Interactive Lens Demonstration & Sandbox</p>
+    </div>
+    <a href="index.html" class="back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Retour à la console
+    </a>
+  </header>
+
+  <!-- Sandbox Dashboard -->
+  <main>
+    
+    <!-- iPhone Device Frame Preview (Left Column) -->
+    <div class="simulator-container">
+      <div class="iphone-frame">
+        <div class="dynamic-island" id="island"></div>
+        <div class="iphone-screen">
+          
+          <div class="app-bg">
+            <div class="app-bg-glow"></div>
+          </div>
+          
+          <div class="app-content">
+            <!-- Simulated iOS Status Bar -->
+            <div class="status-bar">
+              <span id="status-time">09:41</span>
+              <div class="status-right">
+                <!-- Signal -->
+                <svg width="15" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2z"/></svg>
+                <!-- Wifi -->
+                <svg width="14" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 14 0M1.5 9.5a15 15 0 0 1 21 0"/></svg>
+                <!-- Battery -->
+                <div class="status-battery">
+                  <div class="status-battery-level"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- INTERACTIVE MAGNIFIER REGION (Top Header Bar in Mobile Web) -->
+            <div class="interactive-zone" id="magnifier-hitbox">
+              <div class="navbar-wrapper" id="nav-wrapper">
+                
+                <!-- Layer 1: Base Dark iOS Bar -->
+                <div class="navbar-layer base-layer" id="navbar-base">
+                  
+                  <div class="tab-item active" data-tab-id="0">
+                    <div class="tab-icon-wrapper">
+                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    </div>
+                    <span class="tab-label">Contacts</span>
+                  </div>
+
+                  <div class="tab-item" data-tab-id="1">
+                    <div class="tab-icon-wrapper">
+                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                    </div>
+                    <span class="tab-label">Appels</span>
+                  </div>
+
+                  <div class="tab-item" data-tab-id="2">
+                    <div class="tab-icon-wrapper">
+                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <span class="badge">24,2K</span>
+                    </div>
+                    <span class="tab-label">Échanges</span>
+                  </div>
+
+                  <div class="tab-item" data-tab-id="3">
+                    <div class="tab-icon-wrapper">
+                      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      </svg>
+                      <span class="status-dot"></span>
+                    </div>
+                    <span class="tab-label">Paramètres</span>
+                  </div>
+
+                </div>
+
+                <!-- Layer 2: Clipped Magnified Layer (HTML contents mirrored by JS) -->
+                <div class="magnifier-container" id="magnifier-box">
+                  <div class="navbar-layer magnified-layer" id="navbar-magnified">
+                    <!-- Cloned contents injected here -->
+                  </div>
+                </div>
+
+                <!-- Layer 3: 3D Reflection lens bubble overlay -->
+                <div class="magnifier-lens" id="lens"></div>
+
+              </div>
+            </div>
+
+            <!-- APP SCREEN INNER VIEWS -->
+            <div class="app-screen-body">
+              
+              <!-- TAB 0: CONTACTS VIEW -->
+              <div class="view-panel active" id="view-0">
+                <h2 class="view-title">Contacts</h2>
+                <div class="contact-list">
+                  <div class="contact-card">
+                    <div class="contact-avatar" style="--avatar-c1: #ff5e62; --avatar-c2: #ff9966;">JD</div>
+                    <div class="contact-info">
+                      <div class="contact-name">Jean Dupont</div>
+                      <div class="contact-status">En ligne sur MB15 API</div>
+                    </div>
+                  </div>
+                  <div class="contact-card">
+                    <div class="contact-avatar" style="--avatar-c1: #4facfe; --avatar-c2: #00f2fe;">ML</div>
+                    <div class="contact-info">
+                      <div class="contact-name">Marc Lemaire</div>
+                      <div class="contact-status">Dernière connexion il y a 2h</div>
+                    </div>
+                  </div>
+                  <div class="contact-card">
+                    <div class="contact-avatar" style="--avatar-c1: #11998e; --avatar-c2: #38ef7d;">SM</div>
+                    <div class="contact-info">
+                      <div class="contact-name">Sophie Martin</div>
+                      <div class="contact-status">Ne pas déranger</div>
+                    </div>
+                  </div>
+                  <div class="contact-card">
+                    <div class="contact-avatar" style="--avatar-c1: #fc00ff; --avatar-c2: #00dbde;">AL</div>
+                    <div class="contact-info">
+                      <div class="contact-name">Alice Laurent</div>
+                      <div class="contact-status">Hors ligne</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 1: CALLS VIEW -->
+              <div class="view-panel" id="view-1">
+                <h2 class="view-title">Récents</h2>
+                <div class="calls-list">
+                  <div class="call-card">
+                    <div class="call-meta">
+                      <svg class="call-icon call-missed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      <div class="call-details">
+                        <h4 class="call-missed">Sophie Martin (2)</h4>
+                        <p>Mobile</p>
+                      </div>
+                    </div>
+                    <span class="call-time">13:42</span>
+                  </div>
+
+                  <div class="call-card">
+                    <div class="call-meta">
+                      <svg class="call-icon call-incoming" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      <div class="call-details">
+                        <h4>Jean Dupont</h4>
+                        <p>France</p>
+                      </div>
+                    </div>
+                    <span class="call-time">Hier</span>
+                  </div>
+
+                  <div class="call-card">
+                    <div class="call-meta">
+                      <svg class="call-icon call-incoming" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      <div class="call-details">
+                        <h4>+33 6 12 34 56 78</h4>
+                        <p>Inconnu</p>
+                      </div>
+                    </div>
+                    <span class="call-time">Lundi</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 2: EXCHANGES VIEW -->
+              <div class="view-panel" id="view-2">
+                <h2 class="view-title">Échanges</h2>
+                <div class="chat-bubble-container">
+                  <div class="chat-bubble received">
+                    Salut ! Tu as vu le nouvel effet d'aberration chromatique sur la loupe ? C'est super propre.
+                  </div>
+                  <div class="chat-bubble sent">
+                    Grave ! Le radial gradient simule vraiment bien l'effet du verre 3D avec les reflets.
+                  </div>
+                  <div class="chat-bubble received">
+                    Oui et le suivi est hyper fluide sur l'écran tactile, le momentum est parfait.
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 3: SETTINGS VIEW -->
+              <div class="view-panel" id="view-3">
+                <h2 class="view-title">Paramètres</h2>
+                <div class="settings-group">
+                  <div class="settings-row">
+                    <div class="settings-row-left">
+                      <div class="settings-icon-box" style="--sett-color: #007aff;">
+                        <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 10a8 8 0 0 1-16 0c0-4.42 4-8 8-8s8 3.58 8 8z"/><path d="M12 2v8"/></svg>
+                      </div>
+                      <span>Notifications</span>
+                    </div>
+                    <label class="ios-switch">
+                      <input type="checkbox" checked>
+                      <span class="ios-slider"></span>
+                    </label>
+                  </div>
+                  
+                  <div class="settings-row">
+                    <div class="settings-row-left">
+                      <div class="settings-icon-box" style="--sett-color: #30d158;">
+                        <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      </div>
+                      <span>Sécurité & Clé</span>
+                    </div>
+                    <label class="ios-switch">
+                      <input type="checkbox" checked>
+                      <span class="ios-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-row-left">
+                      <div class="settings-icon-box" style="--sett-color: #ff9f0a;">
+                        <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                      </div>
+                      <span>Haptic Feedback</span>
+                    </div>
+                    <label class="ios-switch">
+                      <input type="checkbox" id="toggle-island-haptic">
+                      <span class="ios-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Home Indicator (Sleek iOS touch bottom indicator) -->
+            <div style="width: 135px; height: 5px; background: rgba(255, 255, 255, 0.4); border-radius: 10px; margin: 8px auto 6px auto; shrink: 0; z-index: 5;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIGURATION PANEL (Right Column) -->
+    <div class="control-panel">
+      <div>
+        <h2 class="panel-section-title">Contrôle de l'Optique</h2>
+        
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 14px;">
+          
+          <!-- Zoom Magnifier Slider -->
+          <div class="control-group">
+            <div class="control-label-wrapper">
+              <span>Grossissement (Scale)</span>
+              <span class="control-value" id="val-scale">1.25x</span>
+            </div>
+            <input type="range" id="opt-scale" min="1" max="2" step="0.05" value="1.25">
+          </div>
+
+          <!-- Lens Radius Slider -->
+          <div class="control-group">
+            <div class="control-label-wrapper">
+              <span>Rayon de la Loupe</span>
+              <span class="control-value" id="val-radius">70px</span>
+            </div>
+            <input type="range" id="opt-radius" min="40" max="150" value="70">
+          </div>
+
+          <!-- Chromatic Aberration Intensity -->
+          <div class="control-group">
+            <div class="control-label-wrapper">
+              <span>Aberration Chromatique</span>
+              <span class="control-value" id="val-aberration">1.5px</span>
+            </div>
+            <input type="range" id="opt-aberration" min="0" max="6" step="0.5" value="1.5">
+          </div>
+
+          <!-- Momentum Tracking Speed -->
+          <div class="control-group">
+            <div class="control-label-wrapper">
+              <span>Inertie de Suivi (LERP)</span>
+              <span class="control-value" id="val-speed">0.15</span>
+            </div>
+            <input type="range" id="opt-speed" min="0.02" max="0.5" step="0.01" value="0.15">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Feature Toggles -->
+      <div>
+        <h2 class="panel-section-title">Effets Visuels</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+          
+          <div class="checkbox-row">
+            <span>Reflet 3D du Verre (Radial Glow)</span>
+            <label class="ios-switch">
+              <input type="checkbox" id="toggle-reflection" checked>
+              <span class="ios-slider"></span>
+            </label>
+          </div>
+
+          <div class="checkbox-row">
+            <span>Frange Irisée (Chromatic Border)</span>
+            <label class="ios-switch">
+              <input type="checkbox" id="toggle-aberration" checked>
+              <span class="ios-slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Wallpapers choice -->
+      <div>
+        <h2 class="panel-section-title">Fond d'Écran iOS</h2>
+        <div class="dropdown" style="margin-top: 10px;">
+          <select id="select-theme">
+            <option value="theme-sunset" selected>iOS Sunset (Orange & Rouge)</option>
+            <option value="theme-aurora">iOS Aurora (Vert & Bleu)</option>
+            <option value="theme-deepspace">Deep Space (Violet & Noir)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Technical Explanation -->
+      <div class="explanations">
+        <h3>Comment ça fonctionne ?</h3>
+        <p>
+          1. <strong>Superposition 3-Couches</strong> : La barre de navigation est clonée dynamiquement en JS. La couche supérieure (magnified) subit un <code>scale</code> et est masquée par un <code>clip-path: circle()</code>.
+        </p>
+        <p>
+          2. <strong>Calcul Optique Réel</strong> : L'origine du grossissement (<code>transform-origin</code>) est synchronisée en temps réel avec le centre du cercle de découpe. Ceci évite les décalages optiques.
+        </p>
+        <p>
+          3. <strong>Aberration & Prisme</strong> : Le bord de la lentille est doté de <code>box-shadow</code> décalés horizontalement avec des couleurs complémentaires (Magenta et Cyan). Les textes et icônes subissent un traitement similaire grâce à <code>drop-shadow</code>.
+        </p>
+        <p class="explanations-footer">Expert Frontend — Glassmorphic Lens V1.0</p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer>
+    <p>© 2026 MB15 Front-End Engine — Réalisé en Vanilla HTML, CSS et JavaScript pur.</p>
+  </footer>
+
+  <!-- CORE CODE LOGIC (JS) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Elements
+      const navWrapper = document.getElementById("nav-wrapper");
+      const navbarBase = document.getElementById("navbar-base");
+      const navbarMagnified = document.getElementById("navbar-magnified");
+      const magnifierBox = document.getElementById("magnifier-box");
+      const lens = document.getElementById("lens");
+      const appBody = document.querySelector(".app-screen-body");
+      const island = document.getElementById("island");
+
+      // Set clock
+      function updateClock() {
+        const now = new Date();
+        let hours = now.getHours().toString().padStart(2, '0');
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+        document.getElementById("status-time").textContent = `${hours}:${minutes}`;
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // OPTICS STATE VARIABLES (with momentum / interpolation)
+      let state = {
+        targetX: 180,
+        targetY: 40,
+        currentX: 180,
+        currentY: 40,
+        isActive: false,
+        lerpSpeed: 0.15,
+        scale: 1.25,
+        radius: 70,
+        aberration: 1.5,
+        showReflection: true,
+        showAberration: true
+      };
+
+      // 1. Initial Synchronisation (Clone navbar html to magnified layer)
+      function syncNavbarHTML() {
+        navbarMagnified.innerHTML = navbarBase.innerHTML;
+        
+        // Re-attach hover/click states triggers (needed after HTML clone)
+        const baseItems = navbarBase.querySelectorAll(".tab-item");
+        const magnifiedItems = navbarMagnified.querySelectorAll(".tab-item");
+        
+        baseItems.forEach((tab, index) => {
+          // Tab active states click handler
+          tab.addEventListener("click", () => {
+            setActiveTab(index);
+          });
+          
+          // Sync hover state
+          tab.addEventListener("mouseenter", () => {
+            tab.classList.add("hovered");
+            magnifiedItems[index].classList.add("hovered");
+          });
+          
+          tab.addEventListener("mouseleave", () => {
+            tab.classList.remove("hovered");
+            magnifiedItems[index].classList.remove("hovered");
+          });
+        });
+      }
+      
+      // Update active Tab
+      function setActiveTab(activeIndex) {
+        // Update base tabs
+        navbarBase.querySelectorAll(".tab-item").forEach((tab, index) => {
+          if (index === activeIndex) {
+            tab.classList.add("active");
+          } else {
+            tab.classList.remove("active");
+          }
+        });
+        
+        // Update magnified tabs
+        navbarMagnified.querySelectorAll(".tab-item").forEach((tab, index) => {
+          if (index === activeIndex) {
+            tab.classList.add("active");
+          } else {
+            tab.classList.remove("active");
+          }
+        });
+
+        // Switch visible view in app
+        document.querySelectorAll(".view-panel").forEach((panel, index) => {
+          if (index === activeIndex) {
+            panel.classList.add("active");
+          } else {
+            panel.classList.remove("active");
+          }
+        });
+
+        // Simulate subtle dynamic island animation on switch
+        island.style.width = "150px";
+        setTimeout(() => {
+          island.style.width = "110px";
+        }, 300);
+      }
+
+      // Initialize HTML Cloning
+      syncNavbarHTML();
+
+      // 2. INTERACTION HANDLERS (MOUSE & TOUCH)
+      
+      function updateTargetCoords(clientX, clientY) {
+        const rect = navWrapper.getBoundingClientRect();
+        
+        // Calculate coordinates relative to the navbar wrapper bounding box
+        state.targetX = clientX - rect.left;
+        state.targetY = clientY - rect.top;
+      }
+
+      function activateLens() {
+        state.isActive = true;
+        magnifierBox.classList.add("active");
+        lens.classList.add("active");
+      }
+
+      function deactivateLens() {
+        state.isActive = false;
+        magnifierBox.classList.remove("active");
+        lens.classList.remove("active");
+      }
+
+      // Mouse Events
+      navWrapper.addEventListener("mouseenter", (e) => {
+        activateLens();
+        updateTargetCoords(e.clientX, e.clientY);
+        // Snap immediately on enter to avoid weird flies
+        state.currentX = state.targetX;
+        state.currentY = state.targetY;
+      });
+
+      navWrapper.addEventListener("mousemove", (e) => {
+        if (!state.isActive) activateLens();
+        updateTargetCoords(e.clientX, e.clientY);
+      });
+
+      navWrapper.addEventListener("mouseleave", () => {
+        deactivateLens();
+      });
+
+      // Touch Events (Mobile support)
+      navWrapper.addEventListener("touchstart", (e) => {
+        // Prevent scroll to make loupe interaction comfortable
+        e.preventDefault();
+        activateLens();
+        const touch = e.touches[0];
+        updateTargetCoords(touch.clientX, touch.clientY);
+        state.currentX = state.targetX;
+        state.currentY = state.targetY;
+      }, { passive: false });
+
+      navWrapper.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        updateTargetCoords(touch.clientX, touch.clientY);
+      }, { passive: false });
+
+      navWrapper.addEventListener("touchend", () => {
+        deactivateLens();
+      });
+
+      navWrapper.addEventListener("touchcancel", () => {
+        deactivateLens();
+      });
+
+      // 3. PHYSICAL LERP DRAWING LOOP (runs continuously for ultra fluid feel)
+      function physicsTick() {
+        if (state.isActive) {
+          // Linear interpolation (Lerp): Current = Current + (Target - Current) * Speed
+          state.currentX += (state.targetX - state.currentX) * state.lerpSpeed;
+          state.currentY += (state.targetY - state.currentY) * state.lerpSpeed;
+
+          // Apply coordinates to CSS Custom Properties
+          document.documentElement.style.setProperty("--x", `${state.currentX.toFixed(2)}px`);
+          document.documentElement.style.setProperty("--y", `${state.currentY.toFixed(2)}px`);
+        }
+        
+        requestAnimationFrame(physicsTick);
+      }
+      
+      // Start the physics loop
+      requestAnimationFrame(physicsTick);
+
+      // 4. CONFIG PANEL SLIDERS BINDING
+      
+      const optScale = document.getElementById("opt-scale");
+      const optRadius = document.getElementById("opt-radius");
+      const optAberration = document.getElementById("opt-aberration");
+      const optSpeed = document.getElementById("opt-speed");
+      const toggleReflection = document.getElementById("toggle-reflection");
+      const toggleAberration = document.getElementById("toggle-aberration");
+      const selectTheme = document.getElementById("select-theme");
+
+      // Sync settings visually & update variables
+      optScale.addEventListener("input", (e) => {
+        state.scale = parseFloat(e.target.value);
+        document.getElementById("val-scale").textContent = `${state.scale.toFixed(2)}x`;
+        document.documentElement.style.setProperty("--lens-scale", state.scale);
+      });
+
+      optRadius.addEventListener("input", (e) => {
+        state.radius = parseInt(e.target.value);
+        document.getElementById("val-radius").textContent = `${state.radius}px`;
+        document.documentElement.style.setProperty("--lens-radius", `${state.radius}px`);
+      });
+
+      optAberration.addEventListener("input", (e) => {
+        state.aberration = parseFloat(e.target.value);
+        document.getElementById("val-aberration").textContent = `${state.aberration.toFixed(1)}px`;
+        document.documentElement.style.setProperty("--aberration-offset", `${state.aberration}px`);
+      });
+
+      optSpeed.addEventListener("input", (e) => {
+        state.lerpSpeed = parseFloat(e.target.value);
+        document.getElementById("val-speed").textContent = state.lerpSpeed.toFixed(2);
+      });
+
+      // Checkboxes & Themes
+      toggleReflection.addEventListener("change", (e) => {
+        state.showReflection = e.target.checked;
+        if (state.showReflection) {
+          navWrapper.classList.remove("no-reflection");
+        } else {
+          navWrapper.classList.add("no-reflection");
+        }
+      });
+
+      toggleAberration.addEventListener("change", (e) => {
+        state.showAberration = e.target.checked;
+        if (state.showAberration) {
+          navWrapper.classList.remove("no-aberration");
+        } else {
+          navWrapper.classList.add("no-aberration");
+        }
+      });
+
+      selectTheme.addEventListener("change", (e) => {
+        document.body.className = e.target.value;
+      });
+
+      // Mobile status bar battery animation simulation
+      setInterval(() => {
+        const batteryLevel = document.querySelector(".status-battery-level");
+        let currentWidth = parseInt(batteryLevel.style.width) || 80;
+        if (currentWidth > 5) {
+          batteryLevel.style.width = (currentWidth - 1) + "%";
+        }
+      }, 60000); // Reduce battery by 1% every minute
+    });
+  </script>
+</body>
+</html>

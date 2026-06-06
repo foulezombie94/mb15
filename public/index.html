@@ -11,6 +11,135 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <!-- Tailwind CSS -->
   <link rel="stylesheet" href="output.css">
+
+  <!-- Mobile Bottom Nav Magnifier styles -->
+  <style>
+    @media (max-width: 767.98px) {
+      :root {
+        --nav-lens-radius: 65px;
+        --nav-lens-scale: 1.25;
+        --nav-aberration: 1.5px;
+      }
+      
+      #nav-links-wrapper {
+        overflow: visible !important;
+      }
+      
+      .mobile-nav-magnifier-container {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 50;
+        clip-path: circle(var(--nav-lens-radius) at var(--nav-x, 50%) var(--nav-y, 50%));
+        opacity: 0;
+        visibility: hidden;
+        transform: translate3d(0, 0, 0);
+        transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      
+      .mobile-nav-magnifier-container.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      
+      #sidebar-menu-magnified {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 15, 20, 0.95);
+        transform: scale(var(--nav-lens-scale));
+        transform-origin: var(--nav-x, 50%) var(--nav-y, 50%);
+        border-radius: 12px;
+      }
+      
+      /* Sync hover style in magnified container */
+      .mobile-nav-magnifier-container a.hovered {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      
+      /* Chromatic aberration on Material Icons & Texts in lens */
+      .mobile-nav-magnifier-container .material-symbols-outlined {
+        filter: 
+          drop-shadow(calc(-0.8 * var(--nav-aberration)) calc(-0.4 * var(--nav-aberration)) 0 rgba(255, 45, 85, 0.95)) 
+          drop-shadow(calc(0.8 * var(--nav-aberration)) calc(0.4 * var(--nav-aberration)) 0 rgba(0, 240, 255, 0.95));
+      }
+      
+      .mobile-nav-magnifier-container span {
+        text-shadow: 
+          calc(-0.8 * var(--nav-aberration)) calc(-0.4 * var(--nav-aberration)) 0 rgba(255, 45, 85, 0.95), 
+          calc(0.8 * var(--nav-aberration)) calc(0.4 * var(--nav-aberration)) 0 rgba(0, 240, 255, 0.95);
+      }
+
+      /* 3D Glass Droplet Lens Overlay */
+      .mobile-nav-lens {
+        position: absolute;
+        width: calc(2 * var(--nav-lens-radius));
+        height: calc(2 * var(--nav-lens-radius));
+        left: calc(var(--nav-x, 50%) - var(--nav-lens-radius));
+        top: calc(var(--nav-y, 50%) - var(--nav-lens-radius));
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 60;
+        box-sizing: border-box;
+        
+        /* Volume radial refraction gradient */
+        background: radial-gradient(
+          circle at 35% 35%,
+          rgba(255, 255, 255, 0.35) 0%,
+          rgba(255, 255, 255, 0.1) 15%,
+          rgba(255, 255, 255, 0) 45%,
+          rgba(0, 0, 0, 0.25) 75%,
+          rgba(0, 0, 0, 0.65) 100%
+        );
+        
+        /* Prismatic border shadow */
+        box-shadow: 
+          inset 0 0 8px rgba(255, 255, 255, 0.35),
+          inset -3px -3px 6px rgba(0, 0, 0, 0.35),
+          calc(-1 * var(--nav-aberration)) calc(-0.7 * var(--nav-aberration)) calc(3px + var(--nav-aberration)) rgba(255, 45, 85, 0.65), 
+          calc(1 * var(--nav-aberration)) calc(0.7 * var(--nav-aberration)) calc(3px + var(--nav-aberration)) rgba(0, 240, 255, 0.65),
+          0 8px 20px rgba(0, 0, 0, 0.5);
+          
+        border: 1.5px solid rgba(255, 255, 255, 0.25);
+        
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(0.85) translate3d(0, 0, 0);
+        transition: 
+          opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+          visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+          transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      
+      /* Glossy crescent highlight at the top */
+      .mobile-nav-lens::before {
+        content: '';
+        position: absolute;
+        top: 6%;
+        left: 15%;
+        width: 70%;
+        height: 30%;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 100%);
+        border-radius: 50% 50% 40% 40% / 60% 60% 30% 30%;
+      }
+
+      .mobile-nav-lens.active {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1) translate3d(0, 0, 0);
+      }
+      
+      /* Smooth transitions for mobile keyboard hiding */
+      .mobile-nav-hidden {
+        transform: translateY(80px) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    }
+  </style>
 </head>
 <body class="bg-background text-on-surface font-body-md overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
 
@@ -32,7 +161,7 @@
       </div>
 
       <!-- Navigation Links -->
-      <div class="flex-grow md:flex-1 overflow-x-auto md:overflow-y-auto w-full h-full md:h-auto">
+      <div id="nav-links-wrapper" class="flex-grow md:flex-1 overflow-x-auto md:overflow-y-auto w-full h-full md:h-auto relative">
         <ul class="flex flex-row justify-around items-center h-full w-full space-y-0 md:flex-col md:space-y-sm md:h-auto md:items-stretch" id="sidebar-menu">
           <li class="flex-grow flex justify-center h-full md:block md:w-full md:h-auto px-xs md:px-0">
             <a id="nav-search" class="flex flex-col md:flex-row items-center gap-1 md:gap-md px-3 py-1.5 md:px-md md:py-sm bg-primary-container/10 md:bg-surface-variant/30 text-primary-container border-b-2 md:border-b-0 md:border-l-2 border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.12)] border border-primary-container/20 w-full rounded-xl md:rounded-none text-center md:text-left" href="#" data-tab="search">
@@ -54,6 +183,15 @@
           </li>
 
         </ul>
+
+        <!-- Magnifier Clipped Layer (for mobile nav bar) -->
+        <div class="mobile-nav-magnifier-container md:hidden" id="mobile-nav-magnifier-container">
+          <ul class="flex flex-row justify-around items-center h-full w-full space-y-0 md:flex-col md:space-y-sm md:h-auto md:items-stretch" id="sidebar-menu-magnified">
+          </ul>
+        </div>
+        
+        <!-- Glass Lens Overlay -->
+        <div class="mobile-nav-lens md:hidden" id="mobile-nav-lens"></div>
       </div>
 
       <!-- Footer Section -->

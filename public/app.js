@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCachedQuota(); // Load cached quotas to avoid extra API request on reload
   initSearchView(); // Setup double view switcher
   initMobileNavHider(); // Hide bottom nav on mobile when inputs are focused
+  initMobileNavMagnifier(); // Initialize Glassmorphic Magnifier on mobile bottom bar
 
   // --- LOCALSTORAGE QUOTA CACHING ---
   function loadCachedQuota() {
@@ -1631,6 +1632,152 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+  }
+
+  function initMobileNavMagnifier() {
+    const wrapper = document.getElementById('nav-links-wrapper');
+    const baseMenu = document.getElementById('sidebar-menu');
+    const magnifiedContainer = document.getElementById('mobile-nav-magnifier-container');
+    const magnifiedMenu = document.getElementById('sidebar-menu-magnified');
+    const lens = document.getElementById('mobile-nav-lens');
+    
+    if (!wrapper || !baseMenu || !magnifiedContainer || !magnifiedMenu || !lens) return;
+
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let isActive = false;
+    const lerpSpeed = 0.15;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
+    function syncMagnifiedMenu() {
+      magnifiedMenu.innerHTML = baseMenu.innerHTML;
+    }
+
+    syncMagnifiedMenu();
+
+    baseMenu.addEventListener('click', () => {
+      setTimeout(syncMagnifiedMenu, 15);
+    });
+
+    function getTabFromPoint(clientX, clientY) {
+      const element = document.elementFromPoint(clientX, clientY);
+      if (!element) return null;
+      return element.closest('#sidebar-menu a[data-tab]');
+    }
+
+    function updateCoords(clientX, clientY) {
+      const rect = wrapper.getBoundingClientRect();
+      targetX = clientX - rect.left;
+      targetY = clientY - rect.top;
+    }
+
+    function activate() {
+      if (window.innerWidth >= 768) return;
+      isActive = true;
+      magnifiedContainer.classList.add('active');
+      lens.classList.add('active');
+    }
+
+    function deactivate() {
+      isActive = false;
+      magnifiedContainer.classList.remove('active');
+      lens.classList.remove('active');
+    }
+
+    const baseLinks = baseMenu.querySelectorAll('a[data-tab]');
+    baseLinks.forEach((link, idx) => {
+      link.addEventListener('mouseenter', () => {
+        link.classList.add('hovered');
+        syncMagnifiedMenu();
+      });
+      link.addEventListener('mouseleave', () => {
+        link.classList.remove('hovered');
+        syncMagnifiedMenu();
+      });
+    });
+
+    wrapper.addEventListener('mouseenter', (e) => {
+      if (window.innerWidth >= 768) return;
+      activate();
+      updateCoords(e.clientX, e.clientY);
+      currentX = targetX;
+      currentY = targetY;
+    });
+
+    wrapper.addEventListener('mousemove', (e) => {
+      if (window.innerWidth >= 768) return;
+      if (!isActive) activate();
+      updateCoords(e.clientX, e.clientY);
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+      deactivate();
+    });
+
+    wrapper.addEventListener('touchstart', (e) => {
+      if (window.innerWidth >= 768) return;
+      activate();
+      const touch = e.touches[0];
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+      updateCoords(lastTouchX, lastTouchY);
+      currentX = targetX;
+      currentY = targetY;
+
+      const hoveredLink = getTabFromPoint(lastTouchX, lastTouchY);
+      baseMenu.querySelectorAll('a[data-tab]').forEach(a => a.classList.remove('hovered'));
+      if (hoveredLink) hoveredLink.classList.add('hovered');
+      syncMagnifiedMenu();
+    }, { passive: true });
+
+    wrapper.addEventListener('touchmove', (e) => {
+      if (window.innerWidth >= 768) return;
+      if (!isActive) activate();
+      const touch = e.touches[0];
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+      updateCoords(lastTouchX, lastTouchY);
+
+      const hoveredLink = getTabFromPoint(lastTouchX, lastTouchY);
+      baseMenu.querySelectorAll('a[data-tab]').forEach(a => a.classList.remove('hovered'));
+      if (hoveredLink) hoveredLink.classList.add('hovered');
+      syncMagnifiedMenu();
+    }, { passive: true });
+
+    wrapper.addEventListener('touchend', () => {
+      if (!isActive) return;
+      
+      const finalLink = getTabFromPoint(lastTouchX, lastTouchY);
+      
+      baseMenu.querySelectorAll('a[data-tab]').forEach(a => a.classList.remove('hovered'));
+      syncMagnifiedMenu();
+      
+      if (finalLink) {
+        finalLink.click();
+      }
+      deactivate();
+    });
+
+    wrapper.addEventListener('touchcancel', () => {
+      baseMenu.querySelectorAll('a[data-tab]').forEach(a => a.classList.remove('hovered'));
+      syncMagnifiedMenu();
+      deactivate();
+    });
+
+    function animate() {
+      if (isActive) {
+        currentX += (targetX - currentX) * lerpSpeed;
+        currentY += (targetY - currentY) * lerpSpeed;
+        
+        document.documentElement.style.setProperty('--nav-x', `${currentX.toFixed(2)}px`);
+        document.documentElement.style.setProperty('--nav-y', `${currentY.toFixed(2)}px`);
+      }
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
   }
 
 });
