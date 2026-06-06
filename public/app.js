@@ -1648,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentX = 0;
     let currentY = 0;
     let isActive = false;
-    const lerpSpeed = 0.15;
+    const lerpSpeed = 0.20;
     let lastTouchX = 0;
     let lastTouchY = 0;
 
